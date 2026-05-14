@@ -52,7 +52,8 @@ services:
       vmstorage:
         condition: service_healthy
   #no current way to interact with aggregations yaml
-  #volume 2 denotes a bind mount. First part is location on your physical machine, second is container location.
+  #volume 2 denotes a bind mount for the aggregations yaml. We can trigger a hot reload via:
+  #POST http://localhost:8429/-/reload
   vmagent:
     build: ./vmagent
     container_name: vmagent
@@ -62,6 +63,6 @@ services:
       - "8429:8429"
     volumes:
       - vmagent-data:/vmagentdata
-      - ./vmagent/config.yml:/etc/vmagent/config.yml:ro
+      - ./vmagent/aggregations.yml:/etc/vmagent/aggregations.yml:ro
     depends_on:
       - vminsert
