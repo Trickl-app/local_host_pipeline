@@ -1,0 +1,67 @@
+version: "3.8"
+
+# creates a private internal network called vm-net through which containers can communicate
+networks:
+  vm-net:
+    driver: bridge
+
+volumes:
+  vmstorage-data: {}
+  vmagent-data: {}
+  vmselect-cache: {}
+
+services:
+  #exposting the write port only
+  #other containers in the network can still reach the other ports
+  vmstorage:
+    build: ./vmstorage
+    container_name: vmstorage
+    restart: unless-stopped
+    networks: [vm-net]
+    ports:
+      - "8482:8482"
+    volumes:
+      - vmstorage-data:/storage
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8482/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vminsert:
+    build: ./vminsert
+    container_name: vminsert
+    restart: unless-stopped
+    networks: [vm-net]
+    ports:
+     - "8480:8480"
+    depends_on:
+      vmstorage:
+        condition: service_healthy
+
+  vmselect:
+    build: ./vmselect
+    container_name: vmselect
+    restart: unless-stopped
+    networks: [vm-net]
+    ports:
+      - "8481:8481"
+    volumes:
+      - vmselect-cache:/cache
+    depends_on:
+      vmstorage:
+        condition: service_healthy
+  #no current way to interact with aggregations yaml
+  #volume 2 denotes a bind mount. First part is location on your physical machine, second is container location.
+  vmagent:
+    build: ./vmagent
+    container_name: vmagent
+    restart: unless-stopped
+    networks: [vm-net]
+    ports:
+      - "8429:8429"
+    volumes:
+      - vmagent-data:/vmagentdata
+      - ./vmagent/config.yml:/etc/vmagent/config.yml:ro
+    depends_on:
+      - vminsert
