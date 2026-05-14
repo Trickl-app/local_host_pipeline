@@ -11,6 +11,7 @@ ENTRYPOINT [ "/vmagent-prod" ]
 #remote.streamAggr is the aggregation yaml that we use to apply things like metric aggregation or label normalisation
 CMD [ \
   "--remoteWrite.url=http://vminsert:8480/insert/0/prometheus/api/v1/write", \
-  "--remoteWrite.tmpDataPath=/vmagentdata" \
+  "--remoteWrite.tmpDataPath=/vmagentdata", \
   "--remoteWrite.streamAggr.config=/etc/vmagent/aggregations.yml" \
+  "--remoteWrite.url=http://vector:9090/" \
 ]
