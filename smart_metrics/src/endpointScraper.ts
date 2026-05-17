@@ -28,33 +28,36 @@ const getAllHistoricalMetricNames = async () => {
   return res.data.data;
 }
 
-interface MetricsAPIResponse {
+interface BaseAPIResponse {
   status: string;
   isPartial: boolean;
+}
+
+interface MetricsAPIResponse extends BaseAPIResponse{
   data: MetricsData;
 }
 
 interface MetricsData {
   totalSeries: number;
   totalLabelValuePairs: number;
-  seriesCountByMetricName: MetricCount[];
-  seriesCountByLabelName: LabelCount[];
-  seriesCountByFocusLabelValue: LabelValuePairCount[];
-  seriesCountByLabelValuePair: LabelValuePairCount[];
-  labelValueCountByLabelName: LabelCount[];
+  seriesCountByMetricName: MetricStats[];
+  seriesCountByLabelName: TSDBDataItem[];
+  seriesCountByFocusLabelValue: TSDBDataItem[];
+  seriesCountByLabelValuePair: TSDBDataItem[];
+  labelValueCountByLabelName: TSDBDataItem[];
 }
 
-interface LabelCount {
+interface TSDBDataItem {
   name: string;
   value: number;
 }
 
-interface MetricCount extends LabelCount {
+interface MetricStats extends TSDBDataItem {
   requestsCount: number;
   lastRequestTimestamp: number;
 }
 
-interface LabelValuePairCount extends LabelCount {}
+// we won't format the strings like this every time; you can pass parameters to axios.get using a config obj
 
 // we are interested in seriesCountByMetricName and labelValueCountByLabelName
 // use like this:
@@ -76,4 +79,32 @@ const getMetricsData = async (date?: Date) => {
 const getLabelValueCountsForMetric = async (metricName: string) => {
   const res = await axios.get<MetricsAPIResponse>(`${vmSelectEndpoint}//status/tsdb?match[]=${metricName}&topN=100`);
   return res.data.data;
+}
+
+// // example usage:
+// const { seriesCountByMetricName } = await getMetricsData();
+
+// let todaysTopMetrics = seriesCountByMetricName.map((metricStat: MetricStats) => metricStat.name)
+
+// let labelsOfEachMetric: { [key: string]: TSDBDataItem[] } = {}
+
+// for (let metric of todaysTopMetrics) {
+//   let labels = await getLabelValueCountsForMetric(metric)
+//   labelsOfEachMetric[metric] = labels.labelValueCountByLabelName;
+// }
+
+// // there is often overlap (almost all of mine had overlapped)
+// console.log(labelsOfEachMetric)
+
+
+interface labelsForMetricsAPIResponse extends BaseAPIResponse{
+  data: string[];
+}
+
+// http://localhost:8481/select/0/prometheus/api/v1/label/request_id/values?match[]=http.request.duration_ms_bucket&limit=500
+// is an example of getting up to 500 label values for a label belonging to a metric
+// the data field will be a massive array.
+const getEachLabelValueForMetric = async (metricName: string, labelName: string, limit: number) => {
+  const res = await axios.get<labelsForMetricsAPIResponse>(`${vmSelectEndpoint}/label/${labelName}/values?match[]=${metricName}&limit=${limit}`)
+  return res.data.data
 }
