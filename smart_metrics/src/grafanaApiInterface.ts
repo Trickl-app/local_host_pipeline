@@ -82,16 +82,31 @@ async function collectDashboardQueries() {
 
     const dashboardObjs = response.data
     
-    const dashboardQueries = dashboardObjs.map(async (dashboardObj: any) => {
-        const response = await axios.get(`${GRAFANA_URL}/api/dashboards/uid/${dashboardObj.uid}`)
-        const dashboard = response.data.dashboard
-        const panels = dashboard.panels
-        const targets = panels[0].targets
-        const expr = targets[0].expr
-        
-      }
-    )
+    const dashboardQueries = await Promise.all(
+      dashboardObjs.map(async (dashboardObj: any) => {
+        const response = await axios.get(
+          `${GRAFANA_URL}/api/dashboards/uid/${dashboardObj.uid}`,
+          {
+            auth: {
+              username: GRAFANA_USER,
+              password: GRAFANA_PASSWORD,
+            },
+          }
+        );
+
+        const dashboard = response.data.dashboard;
+        const panels = dashboard.panels;
+        const targets = panels?.[0]?.targets;
+        const expr = targets?.[0]?.expr;
+
+        return expr;
+      })
+    );
+    
+    return dashboardQueries;
   } catch (err) {
     if (err instanceof Error) console.error('Error', err.message)
   }
 }
+
+collectDashboardQueries().then(console.log)
