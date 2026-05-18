@@ -7,6 +7,7 @@ volumes:
   vmstorage-data: {}
   vmagent-data: {}
   vmselect-cache: {}
+  grafana-data: {}
 
 services:
   #exposting the write port only
@@ -65,6 +66,21 @@ services:
     depends_on:
       - vminsert
       #- vector
+  grafana:
+    build: ./grafana
+    container_name: grafana
+    restart: unless-stopped
+    networks: [vm-net]
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - vmselect
 
   # vector:
   #   build: ./vector
