@@ -42,7 +42,7 @@ export interface MetricStats extends TSDBDataItem {
 // use like this:
 // const { seriesCountByMetricName } = await getCurrentActiveMetrics();
 // also gives label value counts but we have no idea which metrics they're associated with
-export const getMetricsData = async (date?: Date) => {
+export const getMetricsData = async (date: Date) => {
   // this gives utc date; can be off by 1 for certain timezones at certain times
   // for example when i tested it I had to use today's date to get yesterday's results.
   const targetDay = date && date.toISOString().slice(0, 10);

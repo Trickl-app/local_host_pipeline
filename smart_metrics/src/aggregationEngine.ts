@@ -1,6 +1,7 @@
 import { collectQueries } from './grafanaApiInterface.js';
 import type { QueryHistoryEntry, QueryDefinition } from './grafanaApiInterface.js';
 import { getMetricsData, getLabelValueCountsForMetric } from './vmSelectApiInterface.js';
+import type { MetricsData } from './vmSelectApiInterface.js';
 
 
 function parseMetricName(query: string): string {
@@ -28,4 +29,15 @@ async function queryParser() {
     grafanaQueriesObject[metricName] = labelSelectors
 
   })
+}
+
+    // - get list of metrics and time series count
+    // - for each metric, get label value counts
+    //   - create object where each key is metric name
+    //     and value is object where each key is label name
+    //     and value is label count
+
+async function databaseParser(date: Date) {
+
+  const metrics = await getMetricsData()
 }
