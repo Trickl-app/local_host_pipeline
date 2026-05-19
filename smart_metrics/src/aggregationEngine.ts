@@ -39,5 +39,16 @@ async function queryParser() {
 
 async function databaseParser(date: Date) {
 
-  const metrics = await getMetricsData()
+  const metricsData = await getMetricsData(date);
+  const vmObject: Record<string, Record<string, number>> = {};
+  const { seriesCountByMetricName} = metricsData;
+
+  const labels = await Promise.all(
+    seriesCountByMetricName.map(async metric => {
+      const labelCount = await getLabelValueCountsForMetric(metric.name, date);
+
+      vmObject[metric.name] = labelCount;
+  }))
 }
+
+databaseParser(new Date)
