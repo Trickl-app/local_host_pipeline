@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@prometheus-io/lezer-promql": "^0.312.0-rc.0",
     "axios": "1.15.1",
     "dotenv": "^17.4.2"
   },

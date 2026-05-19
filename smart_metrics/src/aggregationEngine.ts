@@ -2,33 +2,23 @@ import { collectQueries } from './grafanaApiInterface.js';
 import type { QueryHistoryEntry, QueryDefinition } from './grafanaApiInterface.js';
 import { getMetricsData, getLabelValueCountsForMetric } from './vmSelectApiInterface.js';
 import type { MetricsData } from './vmSelectApiInterface.js';
-
-
-function parseMetricName(query: string): string {
-  const match = query.match(/^([a-zA-Z_:][a-zA-Z0-9_:]*)/)
-  return match?.[1] ?? ''
-}
-
-function parseLabelSelectors(query: string): string[] {
-  const match = query.match(/\{([^}]*)\}/)
-  if (!match) return []
-  return (match[1] ?? '').split(',').map(s => s.trim()).filter(Boolean)
-}
+import { parsePromqlExpression } from './promQLQueryParser.js';
 
 async function queryParser() {
-
   const queryHistory = await collectQueries() as QueryHistoryEntry[]
   const grafanaQueriesObject: Record<string, string[]> = {}
   // get the types right
   queryHistory.forEach((queryHistoryEntry: any) => {
     const query = queryHistoryEntry.queries[0].expr
+    console.log(query)
+    const { metrics, labels } = parsePromqlExpression(query);
 
-    const metricName = parseMetricName(query)
-    const labelSelectors = parseLabelSelectors(query)
-
-    grafanaQueriesObject[metricName] = labelSelectors
-
+    metrics.forEach(metricName => { 
+      grafanaQueriesObject[metricName] ? grafanaQueriesObject[metricName].concat(labels) : grafanaQueriesObject[metricName] = labels;
+    })
   })
+
+  return grafanaQueriesObject;
 }
 
     // - get list of metrics and time series count
@@ -54,4 +44,5 @@ async function databaseParser(date: Date) {
   return vmObject
 }
 
-databaseParser(new Date).then(console.log)
+//databaseParser(new Date).then(console.log)
+queryParser().then(console.log)
