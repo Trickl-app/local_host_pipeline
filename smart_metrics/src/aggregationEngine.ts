@@ -5,7 +5,7 @@ import type { MetricsData } from './vmSelectApiInterface.js';
 import { parsePromqlExpression } from './promQLQueryParser.js';
 import { MetricName } from '@prometheus-io/lezer-promql';
 
-async function queryParser() {
+export async function queryParser() {
   const queryHistory = await collectQueries() as QueryHistoryEntry[]
   const grafanaQueriesObject: Record<string, string[]> = {}
   // get the types right
@@ -36,7 +36,7 @@ interface MetricLabelsMap {
   [metricName: string]: LabelValueCount[];
 }
 
-async function databaseParser(date: Date) {
+export async function databaseParser(date: Date) {
 
   const metricsData = await getMetricsData(date);
   const vmObject: MetricLabelsMap = {};
@@ -58,7 +58,7 @@ async function databaseParser(date: Date) {
 
 // determining those labels that are never queried
 
-function determineUnqueriedMetricLabels(grafanaQueriesObj: Record<string, string[]>, vmObject: MetricLabelsMap) {
+export function determineUnqueriedMetricLabels(grafanaQueriesObj: Record<string, string[]>, vmObject: MetricLabelsMap) {
   const output: typeof vmObject = {}
 
   for (let metric in vmObject) {
