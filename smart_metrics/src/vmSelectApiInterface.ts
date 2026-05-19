@@ -58,7 +58,7 @@ export const getMetricsData = async (date: Date) => {
 // note, there can and often is overlap
 // use just like the above function
 export const getLabelValueCountsForMetric = async (metricName: string, date: Date) => {
-  const res = await axios.get<MetricsAPIResponse>(`${vmSelectEndpoint}/status/tsdb?match[]=${metricName}&topN=100&date=${date.toISOString()}`);
+  const res = await axios.get<MetricsAPIResponse>(`${vmSelectEndpoint}/status/tsdb?match[]=${metricName}&topN=100&date=${date.toISOString().slice(0, 10)}`);
   return res.data.data;
 }
 
