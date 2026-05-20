@@ -1,15 +1,16 @@
 import { vi, test, expect, beforeEach } from 'vitest'
-import { databaseParser, queryParser, determineUnqueriedMetricLabels } from '../src/aggregationEngine.js'
+import { vmParser, grafanaQueriesParser, grafanaDashboardQueriesParser, determineUnqueriedMetricLabels } from '../src/aggregationEngine.js'
 import getMetricsDataTestData from './getMetricsDataTestData.json' with { type: 'json' }
 import getLabelValueCountsForMetricTestData from './getLabelValueCountsForMetricTestData.json' with { type: 'json' }
 import collectQueriesTestData from './collectQueriesTestData.json' with { type: 'json' }
 
 // Safe defaults are required here because aggregationEngine.ts has top-level awaits
 // that fire the moment the module is imported — before beforeEach can set return values.
-const { mockGetMetricsData, mockGetLabelValueCountsForMetric, mockCollectQueries } = vi.hoisted(() => ({
+const { mockGetMetricsData, mockGetLabelValueCountsForMetric, mockCollectQueries, mockCollectDashboardQueries } = vi.hoisted(() => ({
   mockGetMetricsData: vi.fn().mockResolvedValue({ seriesCountByMetricName: [] }),
   mockGetLabelValueCountsForMetric: vi.fn().mockResolvedValue({ labelValueCountByLabelName: [] }),
   mockCollectQueries: vi.fn().mockResolvedValue([]),
+  mockCollectDashboardQueries: vi.fn().mockResolvedValue(['count(http.requests.total{method="GET"})']),
 }))
 
 vi.mock('../src/vmSelectApiInterface.js', () => ({
@@ -19,6 +20,7 @@ vi.mock('../src/vmSelectApiInterface.js', () => ({
 
 vi.mock('../src/grafanaApiInterface.js', () => ({
   collectQueries: mockCollectQueries,
+  collectDashboardQueries: mockCollectDashboardQueries,
 }))
 
 const testDate = new Date('2026-05-19')
@@ -32,47 +34,64 @@ beforeEach(() => {
   mockCollectQueries.mockResolvedValue(collectQueriesTestData.result.queryHistory)
 })
 
-// queryParser tests
+// grafanaQueriesParser tests
 
-test('queryParser returns an object with exactly the queried metric names as keys', async () => {
-  const result = await queryParser()
+test('grafanaQueriesParser returns an object with exactly the queried metric names as keys', async () => {
+  const result = await grafanaQueriesParser()
   expect(Object.keys(result).sort()).toEqual(['http.active_connections', 'http.requests.total'])
 })
 
-test('queryParser maps http.requests.total to all labels it has been queried with', async () => {
-  const result = await queryParser()
+test('grafanaQueriesParser maps http.requests.total to all labels it has been queried with', async () => {
+  const result = await grafanaQueriesParser()
   expect(result['http.requests.total']).toEqual(['method'])
 })
 
-test('queryParser maps http.active_connections to all labels it has been queried with', async () => {
-  const result = await queryParser()
+test('grafanaQueriesParser maps http.active_connections to all labels it has been queried with', async () => {
+  const result = await grafanaQueriesParser()
   expect(result['http.active_connections']).toEqual(['scope.name'])
 })
 
-test('queryParser calls collectQueries exactly once', async () => {
-  await queryParser()
+test('grafanaQueriesParser calls collectQueries exactly once', async () => {
+  await grafanaQueriesParser()
   expect(mockCollectQueries).toHaveBeenCalledTimes(1)
 })
 
-// databaseParser tests
+// grafanaDashboardQueriesParser tests
+
+test('grafanaDashboardQueriesParser returns an object with exactly the queried metric names as keys', async () => {
+  const result = await grafanaDashboardQueriesParser()
+  expect(Object.keys(result)).toEqual(['http.requests.total'])
+})
+
+test('grafanaDashboardQueriesParser maps http.requests.total to all labels it has been queried with', async () => {
+  const result = await grafanaDashboardQueriesParser()
+  expect(result['http.requests.total']).toEqual(['method'])
+})
+
+test('grafanaDashboardQueriesParser calls collectDashboardQueries exactly once', async () => {
+  await grafanaDashboardQueriesParser()
+  expect(mockCollectDashboardQueries).toHaveBeenCalledTimes(1)
+})
+
+// vmParser tests
 
 test('returns an object keyed by all metric names from getMetricsData', async () => {
-  const result = await databaseParser(testDate)
+  const result = await vmParser(testDate)
   expect(Object.keys(result).sort()).toEqual(expectedMetricNames.slice().sort())
 })
 
-test('http.requests.total in the databaseParser() object, maps to the correct labelValueCountByLabelName value', async () => {
-  const result = await databaseParser(testDate)
+test('http.requests.total in the vmParser() object, maps to the correct labelValueCountByLabelName value', async () => {
+  const result = await vmParser(testDate)
   expect(result['http.requests.total']).toEqual(expectedLabelCounts)
 })
 
 test('getLabelValueCountsForMetric is called once per metric', async () => {
-  await databaseParser(testDate)
+  await vmParser(testDate)
   expect(mockGetLabelValueCountsForMetric).toHaveBeenCalledTimes(expectedMetricNames.length)
 })
 
 test('getLabelValueCountsForMetric is called with the correct metric name and date for each metric', async () => {
-  await databaseParser(testDate)
+  await vmParser(testDate)
   for (const metricName of expectedMetricNames) {
     expect(mockGetLabelValueCountsForMetric).toHaveBeenCalledWith(metricName, testDate)
   }

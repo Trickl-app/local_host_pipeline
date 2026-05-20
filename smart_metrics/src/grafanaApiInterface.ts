@@ -144,4 +144,3 @@ export async function collectDashboardQueries() {
     if (err instanceof Error) console.error('Error', err.message);
   }
 }
-

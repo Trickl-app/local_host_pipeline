@@ -4,6 +4,10 @@ load inputs
     - parse metric name and labels from returned expression
       - create object where each key is a metric name
         and each value is array of labels that were queried
+    -collect dashboard query list using function collectDashboardQueries
+      -parse metric name and labels from returned expression
+      - create object where each key is a metric name
+        and each value is array of labels that were queried
         
   - victoria metrics time series data
     - get list of metrics and time series count
@@ -17,7 +21,7 @@ identify labels that are issues
     - iterate through metric names in vm object
       - iterate through each value object
         - for each label, check grafana obj with corresponding 
-          metric name
+          metric name 
         - if array does not contain label, mark as potential 
           aggregation target
 

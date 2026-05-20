@@ -28,7 +28,6 @@ const hasErrors = (node: any) => {
   return false;
 }
 
-
 export const parsePromqlExpression = (expr: string) => {
   const tree = parser.parse(expr);
   const metrics: Set<string> = new Set();
@@ -38,13 +37,18 @@ export const parsePromqlExpression = (expr: string) => {
     // node.type.name is the grammar rule name for this node.
     const type = node.type.name;
 
-    // Metric names appear as Identifier nodes that are direct children of
-    // VectorSelector. Other Identifier nodes (e.g. under FunctionIdentifier)
-    // are function names like "rate" and must be excluded via the parent check.
-    if (type === "Identifier" && node.parent?.type.name === "VectorSelector") {
-      // node.from/node.to are character offsets into the source string, so
-      // slicing the source extracts the exact text this node covers.
-      metrics.add(source.slice(node.from, node.to));
+    // Handle unquoted metric names at the VectorSelector level so that dotted
+    // names like http.requests.total are captured whole. The parser splits them
+    // into multiple Identifier + error nodes, so checking a single Identifier
+    // child would only yield "http". Instead, when the first child is an
+    // Identifier (meaning there is an unquoted metric name), slice the source
+    // from the selector start to where LabelMatchers begins (or the node end).
+    if (type === "VectorSelector" && node.firstChild?.type.name === "Identifier") {
+      let end = node.to;
+      for (let child = node.firstChild; child; child = child.nextSibling) {
+        if (child.type.name === "LabelMatchers") { end = child.from; break; }
+      }
+      metrics.add(expr.slice(node.from, end));
     }
 
     // Prometheus 3.0+ allows metric names with special characters (e.g. dots)
@@ -79,6 +83,7 @@ export const parsePromqlExpression = (expr: string) => {
     for (let child = node.firstChild; child; child = child.nextSibling) {
       walk(child, source);
     }
+    
   }
 
   walk(tree.topNode, expr);

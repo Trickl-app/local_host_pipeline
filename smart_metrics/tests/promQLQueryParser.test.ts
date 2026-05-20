@@ -35,3 +35,9 @@ test('deduplicates metric names that appear more than once', () => {
   const { metrics } = parsePromqlExpression('{"http.requests.total"} / {"http.requests.total"}')
   expect([...metrics]).toEqual(['http.requests.total'])
 })
+
+test('extracts metrics and labels when used in an aggregation function', () => {
+  const { metrics, labels } = parsePromqlExpression('count(http.requests.total{method="GET"})');
+  expect([...metrics]).toEqual(['http.requests.total']);
+  expect([...labels]).toEqual(['method']);
+})

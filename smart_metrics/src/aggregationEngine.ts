@@ -1,25 +1,39 @@
-import { collectQueries } from './grafanaApiInterface.js';
+import { collectQueries, collectDashboardQueries } from './grafanaApiInterface.js';
 import type { QueryHistoryEntry, QueryDefinition } from './grafanaApiInterface.js';
 import { getMetricsData, getLabelValueCountsForMetric } from './vmSelectApiInterface.js';
 import type { MetricsData } from './vmSelectApiInterface.js';
 import { parsePromqlExpression } from './promQLQueryParser.js';
 import { MetricName } from '@prometheus-io/lezer-promql';
 
-export async function queryParser() {
+export async function grafanaQueriesParser() {
   const queryHistory = await collectQueries() as QueryHistoryEntry[]
   const grafanaQueriesObject: Record<string, string[]> = {}
   // get the types right
-  queryHistory.forEach((queryHistoryEntry: any) => {
-    const query = queryHistoryEntry.queries[0].expr
+  queryHistory.forEach((queryHistoryEntry: QueryHistoryEntry) => {
+    const query: string = queryHistoryEntry.queries[0].expr as string
     const { metrics, labels } = parsePromqlExpression(query);
 
-    metrics.forEach(metricName => { 
+    metrics.forEach((metricName: string) => { 
       grafanaQueriesObject[metricName] ? grafanaQueriesObject[metricName].concat(labels) : grafanaQueriesObject[metricName] = labels;
     })
   })
-
   return grafanaQueriesObject;
 }
+
+export async function grafanaDashboardQueriesParser() {
+  const dashboardQueries = await collectDashboardQueries() as string[]
+  const grafanaQueriesObj: Record<string, string[]> = {}
+
+  dashboardQueries.forEach((query: string) => {
+    const { metrics, labels } = parsePromqlExpression(query);
+    metrics.forEach((metricName: string) => {
+      grafanaQueriesObj[metricName] ? grafanaQueriesObj[metricName].concat(labels) : grafanaQueriesObj[metricName] = labels;
+    })
+  })
+  return grafanaQueriesObj;
+}
+
+grafanaDashboardQueriesParser().then(console.log)
 
 
     // - get list of metrics and time series count
@@ -37,7 +51,7 @@ interface MetricLabelsMap {
   [metricName: string]: LabelValueCount[];
 }
 
-export async function databaseParser(date: Date) {
+export async function vmParser(date: Date) {
 
   const metricsData = await getMetricsData(date);
   const vmObject: MetricLabelsMap = {};
@@ -54,8 +68,8 @@ export async function databaseParser(date: Date) {
   return vmObject
 }
 
-//databaseParser(new Date).then(console.log)
-//queryParser().then(console.log)
+//vmParser(new Date).then(console.log)
+//grafanaQueriesParser().then(console.log)
 
 // determining those labels that are never queried
 
@@ -75,7 +89,7 @@ export function determineUnqueriedMetricLabels(grafanaQueriesObj: Record<string,
   return output;
 }
 
-// const grafanaObj = await queryParser();
-// const vmObj = await databaseParser(new Date);
+// const grafanaObj = await grafanaQueriesParser();
+// const vmObj = await vmParser(new Date);
 // const unusued_labels = determineUnqueriedMetricLabels(grafanaObj, vmObj);
 // console.log(unusued_labels)
