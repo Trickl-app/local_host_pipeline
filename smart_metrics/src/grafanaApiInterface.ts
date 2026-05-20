@@ -118,7 +118,9 @@ export async function collectDashboardQueries() {
 
     const dashboardObjs = response.data;
     
-    const dashboardQueries = await Promise.all(
+    // Each dashboard fetch returns string[] (one expr per target per panel).
+    // Promise.all gives string[][], so .flat() collapses it to string[].
+    const dashboardQueries = (await Promise.all(
       dashboardObjs.map(async (dashboardObj: any) => {
         const response = await axios.get<DashboardPayload>(
           `${GRAFANA_URL}/api/dashboards/uid/${dashboardObj.uid}`,
@@ -130,15 +132,14 @@ export async function collectDashboardQueries() {
           }
         );
 
-        const dashboard = response.data.dashboard;
-        const panels = dashboard.panels;
-        const targets = panels?.[0]?.targets;
-        const expr = targets?.[0]?.expr;
-
-        return expr;
+        // Each panel holds one query per target; collect every expr across all panels.
+        const panels = response.data.dashboard.panels ?? [];
+        return panels.flatMap(panel =>
+          (panel.targets ?? []).map(target => target.expr).filter(Boolean)
+        );
       })
-    );
-    
+    )).flat();
+
     return dashboardQueries;
   } catch (err) {
     if (err instanceof Error) console.error('Error', err.message);
