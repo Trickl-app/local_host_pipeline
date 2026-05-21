@@ -5,6 +5,8 @@ import type { TSDBDataItem } from './vmSelectApiInterface.js';
 import { parsePromqlExpression } from './promQLQueryParser.js';
 import axios from 'axios';
 
+const VMSELECT_QUERY_ENDPOINT = process.env.VMSELECT_QUERY_ENDPOINT || "http://localhost:8481/select/0/prometheus/api/v1/query";
+
 function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
 }
@@ -136,13 +138,12 @@ interface VMQueryResponse {
 }
 
 export async function getSeriesReduction(metric: string, label: string): Promise<number> {
-  const url = "http://localhost:8481/select/0/prometheus/api/v1/query";
+  //we're searching over the last hour to estimate series reduction
   const query = `100 * (1 - (count(count without (${label}) (present_over_time(${metric}[1h]))) / count(present_over_time(${metric}[1h]))))`;
 
   try {
-    const params = new URLSearchParams({ query });
-    const response = await axios.post<VMQueryResponse>(url, params, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" }
+    const response = await axios.get<VMQueryResponse>(VMSELECT_QUERY_ENDPOINT, {
+      params: { query }
     });
 
     // type checking
@@ -156,7 +157,6 @@ export async function getSeriesReduction(metric: string, label: string): Promise
   }
   return 0;
 }
-
 
 //getSeriesReduction("http.requests.total", "request_id").then(console.log)
 

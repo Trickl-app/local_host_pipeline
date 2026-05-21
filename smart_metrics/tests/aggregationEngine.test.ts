@@ -6,15 +6,15 @@ import collectQueriesTestData from './collectQueriesTestData.json' with { type: 
 
 // Safe defaults are required here because aggregationEngine.ts has top-level awaits
 // that fire the moment the module is imported — before beforeEach can set return values.
-const { mockGetMetricsData, mockGetLabelValueCountsForMetric, mockCollectQueries, mockCollectDashboardQueries, mockAxiosPost } = vi.hoisted(() => ({
+const { mockGetMetricsData, mockGetLabelValueCountsForMetric, mockCollectQueries, mockCollectDashboardQueries, mockAxiosGet } = vi.hoisted(() => ({
   mockGetMetricsData: vi.fn().mockResolvedValue({ seriesCountByMetricName: [] }),
   mockGetLabelValueCountsForMetric: vi.fn().mockResolvedValue({ labelValueCountByLabelName: [] }),
   mockCollectQueries: vi.fn().mockResolvedValue([]),
   mockCollectDashboardQueries: vi.fn().mockResolvedValue(['count(http.requests.total{method="GET"})']),
-  mockAxiosPost: vi.fn().mockResolvedValue({ data: { status: 'success', data: { result: [{ value: [0, '75.5'] }] } } }),
+  mockAxiosGet: vi.fn().mockResolvedValue({ data: { status: 'success', data: { result: [{ value: [0, '75.5'] }] } } }),
 }))
 
-vi.mock('axios', () => ({ default: { post: mockAxiosPost } }))
+vi.mock('axios', () => ({ default: { get: mockAxiosGet } }))
 
 vi.mock('../src/vmSelectApiInterface.js', () => ({
   getMetricsData: mockGetMetricsData,
@@ -170,13 +170,13 @@ test('getSeriesReduction returns the parsed reduction percentage on success', as
 })
 
 test('getSeriesReduction returns 0 when the result array is empty', async () => {
-  mockAxiosPost.mockResolvedValueOnce({ data: { status: 'success', data: { result: [] } } })
+  mockAxiosGet.mockResolvedValueOnce({ data: { status: 'success', data: { result: [] } } })
   const result = await getSeriesReduction('http.requests.total', 'request_id')
   expect(result).toBe(0)
 })
 
 test('getSeriesReduction returns 0 when axios throws', async () => {
-  mockAxiosPost.mockRejectedValueOnce(new Error('network error'))
+  mockAxiosGet.mockRejectedValueOnce(new Error('network error'))
   const result = await getSeriesReduction('http.requests.total', 'request_id')
   expect(result).toBe(0)
 })
