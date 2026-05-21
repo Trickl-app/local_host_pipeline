@@ -178,6 +178,72 @@ interface NormalizedMetricsData {
       afterByRemovedLabel: {
         [labelName: string]: number;
       };
+      percentageReduction: {
+        [labelName: string]: number;
+      };
     };
   };
 }
+
+export async function normalizeMetricsData(date: Date): Promise<NormalizedMetricsData> {
+  //get our usedlabels, raw tsdb stats (series counts per metric), and labelvalue counts per metric
+  const [combinedGrafanaObj, metricsData, vmObject] = await Promise.all([
+    combineManualandDashboardQueries(),
+    getMetricsData(date),
+    vmParser(date),
+  ]);
+
+  const usedLabels = new Set(
+    Object.values(combinedGrafanaObj).flatMap(labelSet => [...labelSet])
+  );
+
+  // renaming vmObject essentially
+  const metricLabels: NormalizedMetricsData['metricLabels'] = {};
+  for (const [metricName, labelItems] of Object.entries(vmObject)) {
+    metricLabels[metricName] = labelItems.map(item => ({
+      name: item.name,
+      uniqueValueCount: item.value,
+    }));
+  }
+
+  // each metrics current series count
+  const seriesCountByName = new Map(
+    metricsData.seriesCountByMetricName.map(m => [m.name, m.value])
+  );
+
+  const seriesEstimates: NormalizedMetricsData['seriesEstimates'] = {};
+
+  //process each metric in vmObject concurrently (necessary because of getSeriesReduction being async)
+  await Promise.all(
+    Object.entries(vmObject).map(async ([metricName, labelItems]) => {
+      //current series count for a metric
+      const current = seriesCountByName.get(metricName) ?? 0;
+      const unqueriedLabels = labelItems.filter(l => !usedLabels.has(l.name));
+
+      const afterByRemovedLabel: Record<string, number> = {};
+      const percentageReduction: Record<string, number> = {};
+
+      //process each label for a metric concurrently; this is where getSeriesReduction is actually called.
+      await Promise.all(
+        unqueriedLabels.map(async labelItem => {
+          const pct = await getSeriesReduction(metricName, labelItem.name);
+          percentageReduction[labelItem.name] = pct;
+          afterByRemovedLabel[labelItem.name] = Math.round(current * (1 - pct / 100));
+        })
+      );
+
+      seriesEstimates[metricName] = { current, afterByRemovedLabel, percentageReduction };
+    })
+  );
+
+  return {
+    grafanaUsage: { usedLabels: [...usedLabels] },
+    metricLabels,
+    seriesEstimates,
+  };
+}
+
+
+// import { inspect } from 'node:util';
+
+// normalizeMetricsData(new Date()).then(res => console.log(inspect(res, { depth: null})));
