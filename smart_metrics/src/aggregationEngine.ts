@@ -43,10 +43,12 @@ export async function grafanaDashboardQueriesParser() {
   return grafanaQueriesObj;
 }
 
-export function combineManualandDashboardQueries(
-  grafanaQueriesObj: Record<string, Set<string>>,
-  grafanaDashboardQueriesObj: Record<string, Set<string>>
-): Record<string, Set<string>> {
+export async function combineManualandDashboardQueries(): Promise<Record<string, Set<string>>> {
+  const [grafanaQueriesObj, grafanaDashboardQueriesObj] = await Promise.all([
+    grafanaQueriesParser(),
+    grafanaDashboardQueriesParser(),
+  ]);
+
   const combined: Record<string, Set<string>> = {};
 
   for (const [metric, labels] of Object.entries(grafanaQueriesObj)) {

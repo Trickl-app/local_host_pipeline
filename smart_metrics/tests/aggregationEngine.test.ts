@@ -1,5 +1,5 @@
 import { vi, test, expect, beforeEach } from 'vitest'
-import { vmParser, grafanaQueriesParser, grafanaDashboardQueriesParser, determineUnqueriedMetricLabels, getTotalSeriesCount, getSeriesCountForMetric, getSeriesReduction } from '../src/aggregationEngine.js'
+import { vmParser, grafanaQueriesParser, grafanaDashboardQueriesParser, combineManualandDashboardQueries, determineUnqueriedMetricLabels, getTotalSeriesCount, getSeriesCountForMetric, getSeriesReduction } from '../src/aggregationEngine.js'
 import getMetricsDataTestData from './getMetricsDataTestData.json' with { type: 'json' }
 import getLabelValueCountsForMetricTestData from './getLabelValueCountsForMetricTestData.json' with { type: 'json' }
 import collectQueriesTestData from './collectQueriesTestData.json' with { type: 'json' }
@@ -74,6 +74,20 @@ test('grafanaDashboardQueriesParser maps http.requests.total to all labels it ha
 test('grafanaDashboardQueriesParser calls collectDashboardQueries exactly once', async () => {
   await grafanaDashboardQueriesParser()
   expect(mockCollectDashboardQueries).toHaveBeenCalledTimes(1)
+})
+
+// combineManualandDashboardQueries tests
+
+test('combineManualandDashboardQueries returns keys from both query sources', async () => {
+  const result = await combineManualandDashboardQueries()
+  expect(Object.keys(result).sort()).toEqual(['http.active_connections', 'http.requests.total'])
+})
+
+test('combineManualandDashboardQueries merges label sets for a metric that appears in both sources', async () => {
+  // dashboard mock returns a query that adds a second label for http.requests.total
+  mockCollectDashboardQueries.mockResolvedValueOnce(['http.requests.total{region="us-east-1"}'])
+  const result = await combineManualandDashboardQueries()
+  expect(result['http.requests.total']).toEqual(new Set(['method', 'region']))
 })
 
 // vmParser tests
