@@ -44,34 +44,50 @@ export async function detectMetricType(recommendation: Recommendation): Promise<
   return 'gauge';
 }
 
-export async function buildYaml(_recommendation: Recommendation, type: MetricType): Promise<string> {
-    const without = _recommendation.problemLabels.join(', ');
+export interface AggregationRule {
+    match: string;
+    interval: string;
+    outputs: string[];
+    without: string[];
+}
 
-    const rule = (outputs: string) =>
-        `- match: '${_recommendation.metricName}'\n  interval: 1m\n  outputs: [${outputs}]\n  without: [${without}]`;
+export async function buildRule(recommendation: Recommendation, type: MetricType): Promise<AggregationRule> {
+    const rule = (outputs: string): AggregationRule => ({
+        match: recommendation.metricName,
+        interval: '1m',
+        outputs: [outputs],
+        without: recommendation.problemLabels,
+    });
 
     switch (type) {
     case "counter":
-        // total accumulates the sum across the dropped label dimension
         return rule('total');
     case "gauge":
-        // avg aggregates gauge values across the dropped label dimension
         return rule('avg');
     case "histogram":
-        // histogram_bucket preserves the le-keyed bucket structure
         return rule('histogram_bucket');
     case "summary":
-        // avg is a reasonable approximation when collapsing pre-computed quantiles
         return rule('avg');
     }
 }
 
-
-// take a recommendation confirmed by user
-// parse recommendation type (to establish how to aggregate it)
-    // try from name first with regex
-    // fallback on vmselect metadata api endpoint
-    // default to gauge** (subject to change)
-// generate yaml string instruction to remove problem label
-    // needs to also specify aggragation strat that is dependent on recommendation type
-// return the string
+// buildRule return shape (AggregationRule):
+//
+// {
+//   match:    string       — the metric name to target, e.g. 'example_requests_total'
+//   interval: string       — aggregation window, currently hardcoded to '1m'
+//   outputs:  string[]     — aggregation strategy derived from metric type:
+//                              counter   -> ['total']
+//                              gauge     -> ['avg']
+//                              histogram -> ['histogram_bucket']
+//                              summary   -> ['avg']
+//   without:  string[]     — the high-cardinality labels to drop, e.g. ['example_label']
+// }
+//
+// example:
+// {
+//   match: 'example_requests_total',
+//   interval: '1m',
+//   outputs: ['total'],
+//   without: ['example_label']
+// }
