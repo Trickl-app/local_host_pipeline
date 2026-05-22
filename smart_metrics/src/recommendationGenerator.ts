@@ -136,4 +136,4 @@ export function generateRecommendations(
   }
 
   return recommendations;
-}
+} 
