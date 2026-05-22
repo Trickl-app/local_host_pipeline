@@ -1,1 +1,6 @@
-[]
+- match: 'http.requests.total'
+  interval: 1m
+  without: [request_id]
+  # drop_input is not a valid YAML field; it is a CLI-only flag (--remoteWrite.streamAggr.dropInput) set in the Dockerfile
+  outputs:
+    - count_samples

@@ -67,6 +67,7 @@ services:
     depends_on:
       - vminsert
       #- vector
+      
   grafana:
     build: ./grafana
     container_name: grafana
@@ -85,6 +86,17 @@ services:
     depends_on:
       - vmselect
 
+  vector:
+    build: ./vector
+    container_name: vector
+    networks: [vm-net]
+    ports:
+      - "9090:9090"
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION
+      
   postgres:
     image: postgres:16-alpine
     container_name: metropolis-postgres
@@ -104,14 +116,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # vector:
-  #   build: ./vector
-  #   container_name: vector
-  #   networks: [vm-net]
-  #   ports:
-  #     - "9090:9090"
-  #   environment:
-  #     - AWS_ACCESS_KEY_ID=placeholder
-  #     - AWS_SECRET_ACCESS_KEY=placeholder
-  #     - AWS_REGION=placeholder
