@@ -1,0 +1,46 @@
+load inputs
+  - grafana queries
+    - collect query history using function collectQueries
+    - parse metric name and labels from returned expression
+      - create object where each key is a metric name
+        and each value is array of labels that were queried
+    -collect dashboard query list using function collectDashboardQueries
+      -parse metric name and labels from returned expression
+      - create object where each key is a metric name
+        and each value is array of labels that were queried
+    -combine the two results to create an object that represents
+    all labels queried for a metric.
+        
+  - victoria metrics time series data
+    - get list of metrics and time series count
+    - for each metric, get label value counts
+      - create object where each key is metric name
+        and value is object where each key is label name
+        and value is label count
+
+identify labels that are issues
+  - labels that are not queried
+    - iterate through metric names in vm object
+      - iterate through each value object
+        - for each label, check grafana obj with corresponding 
+          metric name 
+        - if array does not contain label, mark as potential 
+          aggregation target
+
+
+  - labels with high cardinality that are seldom queried
+
+  - **n to n label mapping**
+  - **labels with low entropy**
+
+ensure labels do not violate rules
+  - list of protected labels
+
+create recommendation
+  - create code for config file in yaml
+  - create json that contains the labels and metric
+  - store recommendation json in database
+  - convert recommendation to yaml
+
+auto apply yaml to vmagent
+  - 

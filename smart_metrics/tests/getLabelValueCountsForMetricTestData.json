@@ -1,0 +1,503 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "totalSeries": 8750,
+    "totalLabelValuePairs": 87500,
+    "seriesCountByMetricName": [
+      {
+        "name": "http.requests.total",
+        "value": 8750,
+        "requestsCount": 3775,
+        "lastRequestTimestamp": 1779206069
+      }
+    ],
+    "seriesCountByLabelName": [
+      {
+        "name": "__name__",
+        "value": 8750
+      },
+      {
+        "name": "method",
+        "value": 8750
+      },
+      {
+        "name": "region",
+        "value": 8750
+      },
+      {
+        "name": "request_id",
+        "value": 8750
+      },
+      {
+        "name": "route",
+        "value": 8750
+      },
+      {
+        "name": "scope.name",
+        "value": 8750
+      },
+      {
+        "name": "scope.version",
+        "value": 8750
+      },
+      {
+        "name": "service.name",
+        "value": 8750
+      },
+      {
+        "name": "status_code",
+        "value": 8750
+      },
+      {
+        "name": "user_id",
+        "value": 8750
+      }
+    ],
+    "seriesCountByFocusLabelValue": [],
+    "seriesCountByLabelValuePair": [
+      {
+        "name": "__name__=http.requests.total",
+        "value": 8750
+      },
+      {
+        "name": "scope.name=high-cardinality-simulator",
+        "value": 8750
+      },
+      {
+        "name": "scope.version=unknown",
+        "value": 8750
+      },
+      {
+        "name": "service.name=high-cardinality-simulator",
+        "value": 8750
+      },
+      {
+        "name": "region=us-west-2",
+        "value": 2237
+      },
+      {
+        "name": "region=us-east-1",
+        "value": 2218
+      },
+      {
+        "name": "method=POST",
+        "value": 2214
+      },
+      {
+        "name": "method=DELETE",
+        "value": 2193
+      },
+      {
+        "name": "region=eu-west-1",
+        "value": 2188
+      },
+      {
+        "name": "method=GET",
+        "value": 2180
+      },
+      {
+        "name": "method=PUT",
+        "value": 2163
+      },
+      {
+        "name": "region=ap-southeast-1",
+        "value": 2107
+      },
+      {
+        "name": "route=/api/search",
+        "value": 1771
+      },
+      {
+        "name": "route=/api/orders",
+        "value": 1764
+      },
+      {
+        "name": "route=/api/checkout",
+        "value": 1756
+      },
+      {
+        "name": "route=/api/users",
+        "value": 1744
+      },
+      {
+        "name": "route=/api/products",
+        "value": 1715
+      },
+      {
+        "name": "status_code=400",
+        "value": 1290
+      },
+      {
+        "name": "status_code=200",
+        "value": 1287
+      },
+      {
+        "name": "status_code=201",
+        "value": 1279
+      },
+      {
+        "name": "status_code=500",
+        "value": 1277
+      },
+      {
+        "name": "status_code=401",
+        "value": 1221
+      },
+      {
+        "name": "status_code=404",
+        "value": 1214
+      },
+      {
+        "name": "status_code=503",
+        "value": 1182
+      },
+      {
+        "name": "request_id=req-10897",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-13127",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-15592",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-18733",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-21901",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-36205",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-37920",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-42880",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-46680",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-47530",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-52556",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-66049",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-6946",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-6951",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-73299",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-81799",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-91883",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-93202",
+        "value": 3
+      },
+      {
+        "name": "user_id=user-44719",
+        "value": 3
+      },
+      {
+        "name": "user_id=user-68347",
+        "value": 3
+      },
+      {
+        "name": "user_id=user-70667",
+        "value": 3
+      },
+      {
+        "name": "user_id=user-85718",
+        "value": 3
+      },
+      {
+        "name": "user_id=user-86709",
+        "value": 3
+      },
+      {
+        "name": "user_id=user-97912",
+        "value": 3
+      },
+      {
+        "name": "request_id=req-10186",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-10630",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-19713",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-20084",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-20176",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-2051",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-20927",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-21142",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-21541",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-21675",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-21705",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-21718",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-21776",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-21843",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-22039",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-22221",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-22913",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-23062",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-23729",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-23764",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-24430",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-24788",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-249",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-25026",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-25078",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-25121",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-25125",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-2528",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-25633",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-25873",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-25967",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-26069",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-26715",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-26884",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-26975",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-27447",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-27579",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-27699",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-27740",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-28344",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-28711",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-28898",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-28958",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-29344",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-29753",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-29852",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-29878",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-30150",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-30192",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-31186",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-31711",
+        "value": 2
+      },
+      {
+        "name": "request_id=req-31812",
+        "value": 2
+      }
+    ],
+    "labelValueCountByLabelName": [
+      {
+        "name": "request_id",
+        "value": 8359
+      },
+      {
+        "name": "user_id",
+        "value": 8353
+      },
+      {
+        "name": "status_code",
+        "value": 7
+      },
+      {
+        "name": "route",
+        "value": 5
+      },
+      {
+        "name": "method",
+        "value": 4
+      },
+      {
+        "name": "region",
+        "value": 4
+      },
+      {
+        "name": "__name__",
+        "value": 1
+      },
+      {
+        "name": "scope.name",
+        "value": 1
+      },
+      {
+        "name": "scope.version",
+        "value": 1
+      },
+      {
+        "name": "service.name",
+        "value": 1
+      }
+    ]
+  }
+}

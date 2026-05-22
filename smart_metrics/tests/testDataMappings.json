@@ -1,0 +1,13 @@
+{
+  "getMetricsDataTestData.json": {
+    "date": "2026-05-19",
+    "api_endpoint": "http://localhost:8481/select/0/prometheus/api/v1/status/tsdb?topN=100&date=2026-05-19"
+  },
+  "getLabelValueCountsForMetricTestData.json": {
+    "date": "2026-05-19",
+    "api_endpoint": "http://localhost:8481/select/0/prometheus/api/v1/status/tsdb?match[]=http.requests.total&topN=100&date=2026-05-19"
+  },
+  "collectQueriesTestData.json": {
+    "api_endpoint": "http://localhost:3000/api/query-history"
+  }
+}

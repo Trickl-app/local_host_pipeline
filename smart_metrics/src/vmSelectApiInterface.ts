@@ -36,19 +36,17 @@ export interface MetricStats extends TSDBDataItem {
   lastRequestTimestamp: number;
 }
 
-// we won't format the strings like this every time; you can pass parameters to axios.get using a config obj
 
-// we are interested in seriesCountByMetricName and labelValueCountByLabelName
+
+// we are interested in seriesCountByMetricName
 // use like this:
 // const { seriesCountByMetricName } = await getCurrentActiveMetrics();
 // also gives label value counts but we have no idea which metrics they're associated with
-export const getMetricsData = async (date?: Date) => {
+export const getMetricsData = async (date: Date) => {
   // this gives utc date; can be off by 1 for certain timezones at certain times
-  // for example when i tested it I had to use today's date to get yesterday's results.
-  const targetDay = date && date.toISOString().slice(0, 10);
-  const endpoint = targetDay ? `${vmSelectEndpoint}/status/tsdb?topN=100&date=${targetDay}`
-    : `${vmSelectEndpoint}//status/tsdb?topN=100`;
-  const res = await axios.get<MetricsAPIResponse>(endpoint);
+  const res = await axios.get<MetricsAPIResponse>(`${vmSelectEndpoint}/status/tsdb`, {
+    params: { topN: 100, date: date.toISOString().slice(0, 10) }
+  });
   return res.data.data;
 }
 
@@ -58,19 +56,21 @@ export const getMetricsData = async (date?: Date) => {
 // note, there can and often is overlap
 // use just like the above function
 export const getLabelValueCountsForMetric = async (metricName: string, date: Date) => {
-  const res = await axios.get<MetricsAPIResponse>(`${vmSelectEndpoint}/status/tsdb?match[]=${metricName}&topN=100&date=${date.toISOString()}`);
+  const res = await axios.get<MetricsAPIResponse>(`${vmSelectEndpoint}/status/tsdb`, {
+    params: { 'match[]': metricName, topN: 100, date: date.toISOString().slice(0, 10) }
+  });
   return res.data.data;
 }
 
 // // example usage:
-// const { seriesCountByMetricName } = await getMetricsData();
+// const { seriesCountByMetricName } = await getMetricsData(new Date());
 
 // let todaysTopMetrics = seriesCountByMetricName.map((metricStat: MetricStats) => metricStat.name)
 
 // let labelsOfEachMetric: { [key: string]: TSDBDataItem[] } = {}
 
 // for (let metric of todaysTopMetrics) {
-//   let labels = await getLabelValueCountsForMetric(metric)
+//   let labels = await getLabelValueCountsForMetric(metric, new Date())
 //   labelsOfEachMetric[metric] = labels.labelValueCountByLabelName;
 // }
 

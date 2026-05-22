@@ -1,0 +1,251 @@
+{
+  "result": {
+    "totalCount": 11,
+    "queryHistory": [
+      {
+        "uid": "afmjqi0kysp34b",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779206069,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\", method=\"GET\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "afmjqgmo6c2yof",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779206043,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\"}{method=\"GET\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "efmjqfn6q9gxsb",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779206024,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "bfmjqeziaeww0d",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779206012,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\"}{method=\"GET\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "cfmjqew38eznkf",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779206010,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\"}{method=\"GET\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "bfmjqetkam2gwa",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779206009,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\"}{method=\"GET\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "bfmjqe95uguf4e",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779205998,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\"}{method=\"GET\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "ffmh83mrupo1sa",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779145265,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "code",
+            "expr": "{\"http.requests.total\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "dfmh8321c23uoa",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779145255,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "builder",
+            "expr": "{\"http.active_connections\", \"scope.name\"=\"high-cardinality-simulator\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "afmh82yx3mcjkb",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779145253,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "builder",
+            "expr": "{\"http.active_connections\", \"scope.name\"=\"high-cardinality-simulator\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      },
+      {
+        "uid": "bfmh82whp68zka",
+        "datasourceUid": "-- Mixed --",
+        "createdBy": 1,
+        "createdAt": 1779145252,
+        "comment": "",
+        "queries": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "P4169E866C3094E38"
+            },
+            "editorMode": "builder",
+            "expr": "{\"http.active_connections\", \"scope.name\"=\"high-cardinality-simulator\"}",
+            "instant": true,
+            "legendFormat": "__auto",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "starred": false
+      }
+    ],
+    "page": 1,
+    "perPage": 100
+  }
+}
