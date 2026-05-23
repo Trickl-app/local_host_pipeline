@@ -44,43 +44,50 @@ export async function detectMetricType(recommendation: Recommendation): Promise<
   return 'gauge';
 }
 
-export async function buildYaml(_recommendation: Recommendation, type: MetricType): Promise<string> {
-    
-    const newYmlConfig: String;
-    
-    switch (type) {
-    case "counter":
-        newYmlConfig = {  
-            match: _recommendation.metricName // metric name
-            interval: 1m // aggregation timing
-            outputs: [sum_samples] // 
-            without: [request_id] // problem label being dropped
-        }
-        return output,
-    case "guage":
-        let output = {  
-            match: _recommendation.metricName // metric name
-            interval: 1m // aggregation timing
-            outputs: [sum_samples] // 
-            without: [request_id] // problem label being dropped
-        }
-    }
-
-// # - match: 'http_requests_total' // metric name
-// #   interval: 1m // aggregation timing
-// #   outputs: [sum_samples] // 
-// #   without: [request_id] // problem label being dropped
-
-
-  throw new Error('Not implemented');
+export interface AggregationRule {
+    match: string;
+    interval: string;
+    outputs: string[];
+    without: string[];
 }
 
+export async function buildRule(recommendation: Recommendation, type: MetricType): Promise<AggregationRule> {
+    const rule = (outputs: string): AggregationRule => ({
+        match: recommendation.metricName,
+        interval: '1m',
+        outputs: [outputs],
+        without: recommendation.problemLabels,
+    });
 
-// take a recommendation confirmed by user
-// parse recommendation type (to establish how to aggregate it)
-    // try from name first with regex
-    // fallback on vmselect metadata api endpoint
-    // default to gauge** (subject to change)
-// generate yaml string instruction to remove problem label
-    // needs to also specify aggragation strat that is dependent on recommendation type
-// return the string
+    switch (type) {
+    case "counter":
+        return rule('total');
+    case "gauge":
+        return rule('avg');
+    case "histogram":
+        return rule('histogram_bucket');
+    case "summary":
+        return rule('avg');
+    }
+}
+
+// buildRule return shape (AggregationRule):
+//
+// {
+//   match:    string       — the metric name to target, e.g. 'example_requests_total'
+//   interval: string       — aggregation window, currently hardcoded to '1m'
+//   outputs:  string[]     — aggregation strategy derived from metric type:
+//                              counter   -> ['total']
+//                              gauge     -> ['avg']
+//                              histogram -> ['histogram_bucket']
+//                              summary   -> ['avg']
+//   without:  string[]     — the high-cardinality labels to drop, e.g. ['example_label']
+// }
+//
+// example:
+// {
+//   match: 'example_requests_total',
+//   interval: '1m',
+//   outputs: ['total'],
+//   without: ['example_label']
+// }
