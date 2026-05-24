@@ -238,8 +238,20 @@ export async function normalizeMetricsData(date: Date): Promise<NormalizedMetric
 
   return {
     grafanaUsage: { usedLabels: [...usedLabels] },
-    metricLabels,
-    seriesEstimates,
+    metricLabels, //metric labels and cardinality { name: string, uniqueValueCount: number }
+    seriesEstimates, // seriesEstimates: {
+//   "http.requests.total": {
+//     current: 1000,
+//     afterByRemovedLabel: {
+//       "request_id": 20,    // if we dropped request_id, series would go to 20
+//       "user_id": 40        // if we dropped user_id, series would go to 40
+//     },
+//     percentageReduction: {
+//       "request_id": 98,    // dropping request_id reduces series by 98%
+//       "user_id": 96
+//     }
+//   }
+// }
   };
 }
 
