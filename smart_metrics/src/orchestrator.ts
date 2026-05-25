@@ -3,37 +3,36 @@ import { generateRecommendations } from "./recommendationGenerator.js";
 import { buildRule } from "./yamlBuilder.js";
 import { pool } from "./database.js";
 
-const data = await normalizeMetricsData(new Date());
+export const runOrchestrator = async () => {
+  const data = await normalizeMetricsData(new Date());
+  const recommendations = generateRecommendations(data);
+  await pool.query(`DELETE FROM recommendations WHERE status = 'pending'`);
 
-const recommendations = generateRecommendations(data);
-
-await pool.query(`DELETE FROM recommendations WHERE status = 'pending'`);
-
-recommendations.forEach(rec => {
-  const {
-    metricName,
-    status,
-    problemLabels,
-    remainingLabels,
-    estimatedCurrentSeries,
-    estimatedAfterSeries,
-    estimatedReductionPercent,
-    explanation
-  } = rec
-  pool.query(`INSERT INTO recommendations (
-      metric_name,
+  recommendations.forEach(rec => {
+    const {
+      metricName,
       status,
-      problem_labels,
-      remaining_labels,
-      estimated_current_series,
-      estimated_after_series,
-      estimated_reduction_percent,
+      problemLabels,
+      remainingLabels,
+      estimatedCurrentSeries,
+      estimatedAfterSeries,
+      estimatedReductionPercent,
       explanation
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-    [metricName, status, problemLabels, remainingLabels, estimatedCurrentSeries, estimatedAfterSeries, estimatedReductionPercent, explanation]);
-})
-
+    } = rec
+    pool.query(`INSERT INTO recommendations (
+        metric_name,
+        status,
+        problem_labels,
+        remaining_labels,
+        estimated_current_series,
+        estimated_after_series,
+        estimated_reduction_percent,
+        explanation
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [metricName, status, problemLabels, remainingLabels, estimatedCurrentSeries, estimatedAfterSeries, estimatedReductionPercent, explanation]);
+  });
+}
 
 //generate recommendations
 //check table if existing rows are pending; if so delete
