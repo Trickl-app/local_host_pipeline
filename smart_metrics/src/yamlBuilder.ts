@@ -21,12 +21,16 @@ export interface acceptedRecommendations {
 }
 
 //needs to be renamed
+//this is called in the api endpoint (POST), when the grafana front end, submits a batch of recommendations.
+//the shape at point of invocation is acceptedRecommendations (which is the shape we built in front endd)
 export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRecommendations) {
+  // we need the metric name; we have to get this from the key, so we use object.entries cos it gives us the KEYs and values.
   const entries = Object.entries(acceptedRecommendations);
   entries.forEach(async (subArr) => {
+    //determine type for aggregation function
     const type = await detectMetricType(...subArr);
+    //for testing
     console.log(buildRule(...subArr, type));
-    
   })
 }
 
