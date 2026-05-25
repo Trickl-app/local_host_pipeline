@@ -12,7 +12,7 @@ function isDefined<T>(value: T | undefined): value is T {
 }
 
 export async function grafanaQueriesParser() {
-  const queryHistory = await collectQueries()
+  const queryHistory = await collectQueries() || [];
   const grafanaQueriesObject: Record<string, Set<string>> = {}
   queryHistory.forEach((queryHistoryEntry: QueryHistoryEntry) => {
     const query = queryHistoryEntry.queries[0]?.expr;
@@ -30,7 +30,7 @@ export async function grafanaQueriesParser() {
 }
 
 export async function grafanaDashboardQueriesParser() {
-  const dashboardQueries = await collectDashboardQueries()
+  const dashboardQueries = await collectDashboardQueries() || [];
   const grafanaQueriesObj: Record<string, Set<string>> = {}
 
   dashboardQueries.forEach((query: string) => {

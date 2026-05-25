@@ -16,6 +16,18 @@ app.get("/api/recommendations", async (_req, res) => {
   res.json(result.rows);
 });
 
+interface acceptedRecommendations {
+  [key: string]: {
+    problemLabels: string[];
+    allLabels: string[];
+  }
+}
+
+app.post("/api/acceptedRecommendations", (req, res) => {
+  const acceptedRecs = req.body;
+  
+})
+
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
