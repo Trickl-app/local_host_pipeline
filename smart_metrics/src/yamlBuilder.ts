@@ -5,14 +5,8 @@ import type { Recommendation } from './recommendationGenerator.js';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { appendFile, readFile, writeFile } from 'fs/promises';
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = resolve(__dirname, '../../vmagent/aggregations.yml');
-
-
-
-
-
 
 type MetricType = 'counter' | 'gauge' | 'histogram' | 'summary';
 
@@ -78,6 +72,7 @@ export async function writeRule(rule: AggregationRule) {
 
   
   const existing = await readFile(YAML_PATH, 'utf-8');
+  //this will only ever run if aggregations.yml is empty / if it's the first ever aggregation rule.
   if (existing.replace(/\s/g, '') === '[]') {
     await writeFile(YAML_PATH, writtenRule);
   } else {
@@ -135,6 +130,7 @@ export function buildRule(metricName: string, allAndProblemLabelsObj: acceptedRe
     switch (type) {
     case "counter":
         return rule('total');
+    // we can change this to just drop labels in case the user misnamed a metric
     case "gauge":
         return rule('avg');
     case "histogram":
