@@ -3,6 +3,8 @@ import cors from "cors";
 import { pool } from "./database.js";
 import { runOrchestrator } from "./orchestrator.js";
 const app = express();
+app.use(express.json());
+
 const PORT = process.env.PORT ?? 3001;
 
 app.use(cors({ origin: "http://localhost:4000" }));
@@ -25,7 +27,7 @@ interface acceptedRecommendations {
 
 app.post("/api/acceptedRecommendations", (req, res) => {
   const acceptedRecs = req.body;
-  
+  console.log(acceptedRecs);
 })
 
 app.listen(PORT, () => {
