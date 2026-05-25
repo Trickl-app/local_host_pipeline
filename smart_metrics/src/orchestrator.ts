@@ -22,7 +22,7 @@ export const runOrchestrator = async () => {
     pool.query(`INSERT INTO recommendations (
         metric_name,
         status,
-        problem_labels,
+        problem_label,
         remaining_labels,
         estimated_current_series,
         estimated_after_series,

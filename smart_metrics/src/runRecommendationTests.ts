@@ -39,34 +39,32 @@ const recommendations = generateRecommendations(baseData);
 assert.equal(recommendations.length, 2);
 
 const requestIdRecommendation = recommendations.find((recommendation) =>
-  recommendation.problemLabels.includes("request_id")
+  assert.equal(recommendation.problemLabel, "request_id")
 );
 
 assert.ok(requestIdRecommendation);
 assert.equal(requestIdRecommendation.metricName, "http.requests.total");
-assert.deepEqual(requestIdRecommendation.problemLabels, ["request_id"]);
 assert.equal(requestIdRecommendation.estimatedCurrentSeries, 1000);
 assert.equal(requestIdRecommendation.estimatedAfterSeries, 20);
 assert.equal(requestIdRecommendation.estimatedReductionPercent, 98);
 assert.ok(requestIdRecommendation.explanation.includes("request_id"));
 
 const userIdRecommendation = recommendations.find((recommendation) =>
-  recommendation.problemLabels.includes("user_id")
+  assert.equal(recommendation.problemLabel, "user_id")
 );
 
 assert.ok(userIdRecommendation);
-assert.deepEqual(userIdRecommendation.problemLabels, ["user_id"]);
 assert.equal(userIdRecommendation.estimatedAfterSeries, 40);
 assert.equal(userIdRecommendation.estimatedReductionPercent, 96);
 
 const routeRecommendation = recommendations.find((recommendation) =>
-  recommendation.problemLabels.includes("route")
+  assert.equal(recommendation.problemLabel, "route")
 );
 
 assert.equal(routeRecommendation, undefined);
 
 const protectedLabelRecommendation = recommendations.find((recommendation) =>
-  recommendation.problemLabels.includes("le")
+  assert.equal(recommendation.problemLabel, "le")
 );
 
 assert.equal(protectedLabelRecommendation, undefined);
