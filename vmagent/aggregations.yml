@@ -1,1 +1,4 @@
-[]
+- match: 'http.requests.total'
+  interval: 1m
+  outputs: [total]
+  without: [request_id]

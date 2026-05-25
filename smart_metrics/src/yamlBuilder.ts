@@ -1,6 +1,19 @@
 import axios from 'axios';
 import type { Recommendation } from './recommendationGenerator.js';
 
+//../../vmagent/aggregations.yaml
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+import { appendFile, readFile, writeFile } from 'fs/promises';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const YAML_PATH = resolve(__dirname, '../../vmagent/aggregations.yml');
+
+
+
+
+
+
 type MetricType = 'counter' | 'gauge' | 'histogram' | 'summary';
 
 const VMSELECT_METADATA_ENDPOINT = process.env.VMSELECT_METADATA_ENDPOINT
@@ -39,15 +52,39 @@ export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRe
   const entries = Object.entries(acceptedRecommendations);
   //now looks like this:
   //[["metricA", {problemLabels: ..., allLabels: ...}], ["metricB", {problemLabels: ..., allLabels: ...}]]
-  entries.forEach(async (subArr) => {
+  for (const subArr of entries) {
     //determine type for aggregation function
     //...subArr = metricName, {problemLabels: ..., allLabels: ...}
     const type = await detectMetricType(...subArr);
     //for testing
-    console.log(buildRule(...subArr, type));
-  })
+    const rule = buildRule(...subArr, type);
+    console.log(rule);
+    await writeRule(rule);
+  }
 }
 
+//once we build rule, we need to actually somehow, write that rule, to vmagent's aggregations.yaml
+//the rule is json
+//so somehow we need to create a multiline string from the json, which should actually be easy enough
+//and then we insert into aggregations.yaml, a newline string, the multiline string, and that's it.
+//and finally when all rules are inserted into aggregations,yaml, we hit vmagent's reload endpoint.
+
+export async function writeRule(rule: AggregationRule) {
+  const writtenRule = 
+  `- match: '${rule.match}'
+  interval: ${rule.interval}
+  outputs: [${rule.outputs}]
+  without: [${rule.without}]\n`
+
+  
+  const existing = await readFile(YAML_PATH, 'utf-8');
+  if (existing.replace(/\s/g, '') === '[]') {
+    await writeFile(YAML_PATH, writtenRule);
+  } else {
+    await appendFile(YAML_PATH, writtenRule);
+  }
+  await axios.get("http://localhost:8429/-/reload");
+}
 
 export async function detectMetricType(metricName: string, allAndProblemLabelsObj: acceptedRecommendations[string]): Promise<MetricType> {
   const { allLabels } = allAndProblemLabelsObj;
