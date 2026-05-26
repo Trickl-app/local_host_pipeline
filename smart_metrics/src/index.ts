@@ -11,7 +11,8 @@ app.use(express.json());
 
 const PORT = process.env.PORT ?? 3001;
 
-app.use(cors({ origin: "http://localhost:3000" }));
+// allow all origins — this is an internal tool, not a public API
+app.use(cors());
 
 app.get("/api/recommendations", async (_req, res) => {
   //we have the cron job run on each load for testing purposes
