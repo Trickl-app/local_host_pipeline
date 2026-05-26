@@ -80,7 +80,10 @@ services:
       - grafana-data:/var/lib/grafana
       # load instruction for the local repo
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      # linking to the grafana plugin created in separate repo
+      - ../grafana_custom_plugin/dist:/var/lib/grafana/plugins/trickl-trickl-app
     environment:
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=trickl-trickl-app
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
