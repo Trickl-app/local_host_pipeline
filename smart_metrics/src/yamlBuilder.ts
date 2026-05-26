@@ -6,12 +6,12 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { appendFile, readFile, writeFile } from 'fs/promises';
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const YAML_PATH = resolve(__dirname, '../../vmagent/aggregations.yml');
+const YAML_PATH = process.env.YAML_PATH || resolve(__dirname, '../../vmagent/aggregations.yml');
 
 type MetricType = 'counter' | 'gauge' | 'histogram' | 'summary';
 
-const VMSELECT_METADATA_ENDPOINT = process.env.VMSELECT_METADATA_ENDPOINT
-  || 'http://localhost:8481/select/0/prometheus/api/v1/metadata';
+const VMSELECT_METADATA_ENDPOINT = `${process.env.VMSELECT_ENDPOINT || 'http://localhost:8481/select/0/prometheus/api/v1'}/metadata`;
+
 
 interface VMMetadataResponse { 
   status: 'success' | 'error';
@@ -78,7 +78,7 @@ export async function writeRule(rule: AggregationRule) {
   } else {
     await appendFile(YAML_PATH, writtenRule);
   }
-  await axios.get("http://localhost:8429/-/reload");
+  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
 }
 
 export async function detectMetricType(metricName: string, allAndProblemLabelsObj: acceptedRecommendations[string]): Promise<MetricType> {

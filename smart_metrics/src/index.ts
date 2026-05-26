@@ -4,6 +4,7 @@ import { pool } from "./database.js";
 import { runOrchestrator } from "./orchestrator.js";
 import type { acceptedRecommendations } from "./yamlBuilder.js";
 import { yamlBuilderCoordinator } from "./yamlBuilder.js";
+import { stat } from "node:fs";
 
 const app = express();
 app.use(express.json());
@@ -24,6 +25,11 @@ app.get("/api/recommendations", async (_req, res) => {
 app.post("/api/acceptedRecommendations", (req, res) => {
   const acceptedRecs: acceptedRecommendations = req.body;
   yamlBuilderCoordinator(acceptedRecs);
+  res.json({ status: "OK"})
+})
+
+app.get('/health', (req, res) => {
+  res.json( { status: "I'M HEALTHY"})
 })
 
 app.listen(PORT, () => {

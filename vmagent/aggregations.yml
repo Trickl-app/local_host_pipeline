@@ -1,24 +1,4 @@
-- match: 'http.requests.total'
-  interval: 1m
-  outputs: [total]
-  without: [request_id]
-- match: 'http_request_duration_ms_count'
-  interval: 1m
-  outputs: [histogram_bucket]
-  without: [method,route]
 - match: 'http_request_duration_ms_sum'
   interval: 1m
   outputs: [histogram_bucket]
-  without: [route,method]
-- match: 'http_requests_total'
-  interval: 1m
-  outputs: [total]
-  without: [request_id]
-- match: 'http_request_duration_ms_bucket'
-  interval: 1m
-  outputs: [histogram_bucket]
-  without: [route]
-- match: 'http_requests_total'
-  interval: 1m
-  outputs: [total]
-  without: [request_id]
+  without: [method]

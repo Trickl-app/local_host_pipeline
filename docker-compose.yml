@@ -63,7 +63,7 @@ services:
       - "8429:8429"
     volumes:
       - vmagent-data:/vmagentdata
-      - ./vmagent/aggregations.yml:/etc/vmagent/aggregations.yml:ro
+      - ./vmagent/aggregations.yml:/etc/vmagent/aggregations.yml
     depends_on:
       - vminsert
       #- vector
@@ -119,3 +119,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  
+  smart-metrics:
+    build: ./smart_metrics
+    container_name: smart-metrics
+    restart: unless-stopped
+    networks: [vm-net]
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://metropolis:metropolis@metropolis-postgres:5432/metropolis
+      - GRAFANA_URL=http://grafana:3000
+      - GRAFANA_USER=admin
+      - GRAFANA_PASSWORD=admin    
+      - VMSELECT_ENDPOINT=http://vmselect:8481/select/0/prometheus/api/v1
+      - YAML_PATH=/app/aggregations/aggregations.yml
+      - VMAGENT_URL=http://vmagent:8429
+    volumes:
+      - ./vmagent/aggregations.yml:/app/aggregations/aggregations.yml
+    depends_on:
+      postgres:
+        condition: service_healthy
