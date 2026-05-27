@@ -5,7 +5,10 @@ import type { TSDBDataItem } from './vmSelectApiInterface.js';
 import { parsePromqlExpression } from './promQLQueryParser.js';
 import axios from 'axios';
 
-const VMSELECT_QUERY_ENDPOINT = process.env.VMSELECT_QUERY_ENDPOINT || "http://localhost:8481/select/0/prometheus/api/v1/query";
+// Derive the query endpoint from VMSELECT_ENDPOINT so only one env var needs
+// to be set in ECS. Falls back to localhost for local docker-compose dev.
+const vmSelectBase = process.env.VMSELECT_ENDPOINT || "http://localhost:8481/select/0/prometheus/api/v1";
+const VMSELECT_QUERY_ENDPOINT = `${vmSelectBase}/query`;
 
 function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
