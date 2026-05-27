@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { pool } from "./database.js";
+import { pool, setupDatabase } from "./database.js";
 import { runOrchestrator } from "./orchestrator.js";
 import type { acceptedRecommendations } from "./yamlBuilder.js";
 import { yamlBuilderCoordinator } from "./yamlBuilder.js";
@@ -33,6 +33,7 @@ app.get('/health', (req, res) => {
   res.json( { status: "I'M HEALTHY"})
 })
 
+await setupDatabase();
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
