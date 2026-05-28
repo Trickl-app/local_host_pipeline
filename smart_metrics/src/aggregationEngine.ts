@@ -4,6 +4,7 @@ import { getMetricsData, getLabelValueCountsForMetric } from './vmSelectApiInter
 import type { TSDBDataItem } from './vmSelectApiInterface.js';
 import { parsePromqlExpression } from './promQLQueryParser.js';
 import axios from 'axios';
+import { pool } from "./database.js";
 
 // Derive the query endpoint from VMSELECT_ENDPOINT so only one env var needs
 // to be set in ECS. Falls back to localhost for local docker-compose dev.
@@ -188,7 +189,7 @@ interface NormalizedMetricsData {
   };
 }
 
-export async function normalizeMetricsData(date: Date): Promise<NormalizedMetricsData> {
+export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetricsData> {
   //get our usedlabels, raw tsdb stats (series counts per metric), and labelvalue counts per metric
   const [combinedGrafanaObj, metricsData, vmObject] = await Promise.all([
     combineManualandDashboardQueries(),
@@ -200,9 +201,17 @@ export async function normalizeMetricsData(date: Date): Promise<NormalizedMetric
     Object.values(combinedGrafanaObj).flatMap(labelSet => [...labelSet])
   );
 
+  // get list of existing aggregations
+  const aggregations = await getAggregations()
+
+  // filter vmEntries to exclude any metrics that are in aggregations list
+  // filtering here to avoid needing to filter twice (214, 230)
+  const filteredVmObject = Object.entries(vmObject).filter(([metricName]) => !aggregations.includes(metricName));
+
+
   // renaming vmObject essentially
   const metricLabels: NormalizedMetricsData['metricLabels'] = {};
-  for (const [metricName, labelItems] of Object.entries(vmObject)) {
+  for (const [metricName, labelItems] of filteredVmObject) {
     metricLabels[metricName] = labelItems.map(item => ({
       name: item.name,
       uniqueValueCount: item.value,
@@ -218,7 +227,7 @@ export async function normalizeMetricsData(date: Date): Promise<NormalizedMetric
 
   //process each metric in vmObject concurrently (necessary because of getSeriesReduction being async)
   await Promise.all(
-    Object.entries(vmObject).map(async ([metricName, labelItems]) => {
+    filteredVmObject.map(async ([metricName, labelItems]) => {
       //current series count for a metric
       const current = seriesCountByName.get(metricName) ?? 0;
       const unqueriedLabels = labelItems.filter(l => !usedLabels.has(l.name));
@@ -262,3 +271,8 @@ export async function normalizeMetricsData(date: Date): Promise<NormalizedMetric
 // import { inspect } from 'node:util';
 
 // normalizeMetricsData(new Date()).then(res => console.log(inspect(res, { depth: null})));
+
+async function getAggregations() {
+  const aggregations = await pool.query(`SELECT metric_name FROM aggregations`)
+  return aggregations.rows.map(rowObj => rowObj.metric_name)
+}
