@@ -4,6 +4,8 @@ datasources:
   - name: VictoriaMetrics
     type: prometheus
     access: proxy
-    url: http://vmselect.trickl.local:8481/select/0/prometheus
+    # change out the order of comments when switching to aws cdk deployment
+    url: http://vmselect:8481/select/0/prometheus
+    #url: http://vmselect.trickl.local:8481/select/0/prometheus
     isDefault: true
     editable: true

@@ -14,7 +14,7 @@ export const pool = new pg.Pool({
   password: process.env.DB_PASSWORD || "metropolis",
   // RDS requires SSL; rejectUnauthorized: false trusts the RDS cert without
   // needing to bundle the AWS CA — safe for an internal VPC-only connection.
-  ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : false,
+  ssl: (process.env.DB_HOST && process.env.OFFLINE_MODE !== 'true') ? { rejectUnauthorized: false } : false,
 });
 
 export async function closeDatabase() {
