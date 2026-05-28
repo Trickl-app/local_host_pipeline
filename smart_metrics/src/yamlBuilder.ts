@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Recommendation } from './recommendationGenerator.js';
+import { pool } from "./database.js";
 
 //../../vmagent/aggregations.yaml
 import { fileURLToPath } from 'url';
@@ -54,6 +55,7 @@ export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRe
     const rule = buildRule(...subArr, type);
     console.log(rule);
     await writeRule(rule);
+    await writeToDb(rule)
   }
 }
 
@@ -78,6 +80,7 @@ export async function writeRule(rule: AggregationRule) {
   } else {
     await appendFile(YAML_PATH, writtenRule);
   }
+
   await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
 }
 
@@ -160,3 +163,16 @@ export function buildRule(metricName: string, allAndProblemLabelsObj: acceptedRe
 //   outputs: ['total'],
 //   without: ['example_label']
 // }
+
+export async function writeToDb(rule: AggregationRule) {
+  try {
+    const metric = rule.match
+    const labels = rule.without
+    const json = rule
+    await pool.query(`INSERT INTO aggregations(metric_name, labels, json_snippet) VALUES($1, $2, $3)`, [metric, labels, json])
+
+  } catch (err: any) {
+    console.log(err, "An error inside function writeToDb")
+  }
+
+}
