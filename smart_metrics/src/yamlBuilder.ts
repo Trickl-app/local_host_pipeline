@@ -4,7 +4,7 @@ import { pool } from "./database.js";
 //../../vmagent/aggregations.yaml
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { appendFile, readFile, writeFile } from 'fs/promises';
+import { appendFile, writeFile } from 'fs/promises';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = process.env.YAML_PATH || resolve(__dirname, '../../vmagent/aggregations.yml');
 
@@ -47,7 +47,7 @@ export interface acceptedRecommendations {
 //needs to be renamed
 //this is called in the api endpoint (POST), when the grafana front end, submits a batch of recommendations.
 //the shape at point of invocation is acceptedRecommendations (which is the shape we built in front endd)
-export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRecommendations) {
+export async function writeNewRulestoYaml(acceptedRecommendations: acceptedRecommendations) {
   // we need the metric name; we have to get this from the key, so we use object.entries cos it gives us the KEYs and values.
   const entries = Object.entries(acceptedRecommendations);
   //now looks like this:
@@ -58,8 +58,6 @@ export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRe
     return writeToDb(rule);
   }))
   await writeYaml();
-  // tell vmagent to hot-reload its config so the new rule takes effect immediately
-  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
 }
 
 export async function writeYaml() {
@@ -72,6 +70,8 @@ export async function writeYaml() {
       return writeRule(row.json_snippet);
     }));
   }
+  // tell vmagent to hot-reload its config so the new rule takes effect immediately
+  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
 }
 
 export async function writeRule(rule: AggregationRule, overwrite: boolean = false) {
