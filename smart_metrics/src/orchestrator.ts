@@ -8,7 +8,7 @@ export const runOrchestrator = async () => {
   const recommendations = generateRecommendations(data);
   await pool.query(`DELETE FROM recommendations WHERE status = 'pending'`);
 
-  recommendations.forEach(rec => {
+  await Promise.all(recommendations.map(rec => {
     const {
       metricName,
       status,
@@ -18,8 +18,8 @@ export const runOrchestrator = async () => {
       estimatedAfterSeries,
       estimatedReductionPercent,
       explanation
-    } = rec
-    pool.query(`INSERT INTO recommendations (
+    } = rec;
+    return pool.query(`INSERT INTO recommendations (
         metric_name,
         status,
         problem_label,
@@ -31,7 +31,7 @@ export const runOrchestrator = async () => {
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [metricName, status, problemLabel, remainingLabels, estimatedCurrentSeries, estimatedAfterSeries, estimatedReductionPercent, explanation]);
-  });
+  }));
 }
 
 //generate recommendations

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { Recommendation } from './recommendationGenerator.js';
 import { pool } from "./database.js";
 
 //../../vmagent/aggregations.yaml
@@ -21,10 +20,16 @@ interface VMMetadataResponse {
   };
 }
 
+// types concerned with the return of the post route in index.ts after accepted recs. 
+
+type IntervalType = '1m' | '5m' | '15m'
+
 export interface acceptedRecommendations {
   [key: string]: {
     problemLabels: string[];
     allLabels: string[];
+    aggregate?: boolean;
+    interval: IntervalType;
   }
 }
 
@@ -47,40 +52,34 @@ export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRe
   const entries = Object.entries(acceptedRecommendations);
   //now looks like this:
   //[["metricA", {problemLabels: ..., allLabels: ...}], ["metricB", {problemLabels: ..., allLabels: ...}]]
+  //we don't use promise.all because we don't want write conflicts when invoking writeRule
   for (const subArr of entries) {
     //determine type for aggregation function
     //...subArr = metricName, {problemLabels: ..., allLabels: ...}
     const type = await detectMetricType(...subArr);
     //for testing
     const rule = buildRule(...subArr, type);
-    console.log(rule);
     await writeRule(rule);
     await writeToDb(rule)
   }
 }
 
-//once we build rule, we need to actually somehow, write that rule, to vmagent's aggregations.yaml
-//the rule is json
-//so somehow we need to create a multiline string from the json, which should actually be easy enough
-//and then we insert into aggregations.yaml, a newline string, the multiline string, and that's it.
-//and finally when all rules are inserted into aggregations,yaml, we hit vmagent's reload endpoint.
-
 export async function writeRule(rule: AggregationRule) {
-  const writtenRule = 
-  `- match: '${rule.match}'
-  interval: ${rule.interval}
-  outputs: [${rule.outputs}]
+  // combined evaluations for interval and outputs
+  const aggregateLine = rule.outputs ? `\n  interval: ${rule.interval}\n  outputs: [${rule.outputs}]` : '';
+  const writtenRule = `- match: '${rule.match}'${aggregateLine}
   without: [${rule.without}]\n`
 
-
+  // read existing file to check if this is the first rule ever written
   const existing = await readFile(YAML_PATH, 'utf-8');
-  //this will only ever run if aggregations.yml is empty / if it's the first ever aggregation rule.
+  // overwrite if file is empty/placeholder, otherwise append
   if (existing.replace(/\s/g, '') === '[]') {
     await writeFile(YAML_PATH, writtenRule);
   } else {
     await appendFile(YAML_PATH, writtenRule);
   }
 
+  // tell vmagent to hot-reload its config so the new rule takes effect immediately
   await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
 }
 
@@ -117,53 +116,29 @@ export async function detectMetricType(metricName: string, allAndProblemLabelsOb
 //needs to change in the future.
 export interface AggregationRule {
     match: string;
-    interval: string;
-    outputs: string[];
+    interval?: string;
+    outputs?: string[];
     without: string[]
 }
 
 export function buildRule(metricName: string, allAndProblemLabelsObj: acceptedRecommendations[string], type: MetricType): AggregationRule {
-    const rule = (outputs: string): AggregationRule => ({
+    const base: AggregationRule = {
         match: metricName,
-        interval: '1m',
-        outputs: [outputs],
         without: allAndProblemLabelsObj.problemLabels
-    });
+    }; 
+  
+    // evaluate if aggregate is falsy, if so just return obj without an agg rule. 
+    if (!allAndProblemLabelsObj.aggregate) return base;
 
-    switch (type) {
-    case "counter":
-        return rule('total');
-    // we can change this to just drop labels in case the user misnamed a metric
-    case "gauge":
-        return rule('avg');
-    case "histogram":
-        return rule('histogram_bucket');
-    case "summary":
-        return rule('avg');
-    }
+    const outputMap: Record<MetricType, string> = {
+        counter: 'total',
+        gauge: 'avg',
+        histogram: 'histogram_bucket',
+        summary: 'avg',
+    };
+    // add in the outputs field if line 138 did not execute. 
+    return { ...base, interval: allAndProblemLabelsObj.interval, outputs: [outputMap[type]] };
 }
-
-// buildRule return shape (AggregationRule):
-//
-// {
-//   match:    string       — the metric name to target, e.g. 'example_requests_total'
-//   interval: string       — aggregation window, currently hardcoded to '1m'
-//   outputs:  string[]     — aggregation strategy derived from metric type:
-//                              counter   -> ['total']
-//                              gauge     -> ['avg']
-//                              histogram -> ['histogram_bucket']
-//                              summary   -> ['avg']
-//   without:  string[]     — the high-cardinality labels to drop, e.g. ['example_label']
-// }
-//
-// example:
-// {
-//   match: 'example_requests_total',
-//   interval: '1m',
-//   outputs: ['total'],
-//   without: ['example_label']
-// }
-
 export async function writeToDb(rule: AggregationRule) {
   try {
     const metric = rule.match
