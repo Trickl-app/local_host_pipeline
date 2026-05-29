@@ -189,6 +189,11 @@ interface NormalizedMetricsData {
   };
 }
 
+async function getAggregations() {
+  const aggregations = await pool.query(`SELECT metric_name FROM aggregations`)
+  return aggregations.rows.map(rowObj => rowObj.metric_name)
+}
+
 export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetricsData> {
   //get our usedlabels, raw tsdb stats (series counts per metric), and labelvalue counts per metric
   const [combinedGrafanaObj, metricsData, vmObject] = await Promise.all([
@@ -271,8 +276,3 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
 // import { inspect } from 'node:util';
 
 // normalizeMetricsData(new Date()).then(res => console.log(inspect(res, { depth: null})));
-
-async function getAggregations() {
-  const aggregations = await pool.query(`SELECT metric_name FROM aggregations`)
-  return aggregations.rows.map(rowObj => rowObj.metric_name)
-}

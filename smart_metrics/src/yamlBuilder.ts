@@ -4,7 +4,7 @@ import { pool } from "./database.js";
 //../../vmagent/aggregations.yaml
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { appendFile, readFile, writeFile } from 'fs/promises';
+import { appendFile, writeFile } from 'fs/promises';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = process.env.YAML_PATH || resolve(__dirname, '../../vmagent/aggregations.yml');
 
@@ -47,40 +47,45 @@ export interface acceptedRecommendations {
 //needs to be renamed
 //this is called in the api endpoint (POST), when the grafana front end, submits a batch of recommendations.
 //the shape at point of invocation is acceptedRecommendations (which is the shape we built in front endd)
-export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRecommendations) {
+export async function writeNewRulestoYaml(acceptedRecommendations: acceptedRecommendations) {
   // we need the metric name; we have to get this from the key, so we use object.entries cos it gives us the KEYs and values.
   const entries = Object.entries(acceptedRecommendations);
   //now looks like this:
   //[["metricA", {problemLabels: ..., allLabels: ...}], ["metricB", {problemLabels: ..., allLabels: ...}]]
-  //we don't use promise.all because we don't want write conflicts when invoking writeRule
-  for (const subArr of entries) {
-    //determine type for aggregation function
-    //...subArr = metricName, {problemLabels: ..., allLabels: ...}
+  await Promise.all(entries.map(async (subArr) => {
     const type = await detectMetricType(...subArr);
-    //for testing
     const rule = buildRule(...subArr, type);
-    await writeRule(rule);
-    await writeToDb(rule)
-  }
+    return writeToDb(rule);
+  }))
+  await writeYaml();
 }
 
-export async function writeRule(rule: AggregationRule) {
+export async function writeYaml() {
+  const queryRes = await pool.query(`SELECT * FROM aggregations;`);
+  const rows = queryRes.rows
+  // writeFile wipes the yaml file and replaces with an empty array. 
+  await writeFile(YAML_PATH, '[]');
+  if (rows.length) {
+    await writeRule(rows[0].json_snippet, true);
+    await Promise.all(rows.slice(1).map((row) => {
+      return writeRule(row.json_snippet);
+    }));
+  }
+  // tell vmagent to hot-reload its config so the new rule takes effect immediately
+  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
+}
+
+export async function writeRule(rule: AggregationRule, overwrite: boolean = false) {
   // combined evaluations for interval and outputs
   const aggregateLine = rule.outputs ? `\n  interval: ${rule.interval}\n  outputs: [${rule.outputs}]` : '';
   const writtenRule = `- match: '${rule.match}'${aggregateLine}
   without: [${rule.without}]\n`
 
-  // read existing file to check if this is the first rule ever written
-  const existing = await readFile(YAML_PATH, 'utf-8');
-  // overwrite if file is empty/placeholder, otherwise append
-  if (existing.replace(/\s/g, '') === '[]') {
+  if (overwrite) {
     await writeFile(YAML_PATH, writtenRule);
   } else {
     await appendFile(YAML_PATH, writtenRule);
   }
-
-  // tell vmagent to hot-reload its config so the new rule takes effect immediately
-  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
 }
 
 export async function detectMetricType(metricName: string, allAndProblemLabelsObj: acceptedRecommendations[string]): Promise<MetricType> {
@@ -147,7 +152,8 @@ export async function writeToDb(rule: AggregationRule) {
     await pool.query(`INSERT INTO aggregations(metric_name, labels, json_snippet) VALUES($1, $2, $3)`, [metric, labels, json])
 
   } catch (err: any) {
-    console.log(err, "An error inside function writeToDb")
+    // let it bubble up to yamlBuilderCoordinator, which will then let it bubble to the index.ts route.
+    throw(err);
   }
 
 }

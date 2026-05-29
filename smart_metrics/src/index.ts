@@ -3,8 +3,7 @@ import cors from "cors";
 import { pool, setupDatabase } from "./database.js";
 import { runOrchestrator } from "./orchestrator.js";
 import type { acceptedRecommendations } from "./yamlBuilder.js";
-import { yamlBuilderCoordinator } from "./yamlBuilder.js";
-import { stat } from "node:fs";
+import { writeNewRulestoYaml, writeYaml } from "./yamlBuilder.js";
 // import { getAggregations } from "./aggregationEngine.js";
 
 const app = express();
@@ -24,9 +23,26 @@ app.get("/api/recommendations", async (_req, res) => {
   res.json(result.rows);
 });
 
+app.get("/api/aggregations", async (req, res) => {
+  const aggregations = await pool.query(
+    `SELECT id, metric_name, labels, json_snippet FROM aggregations`
+  );
+
+  res.json(aggregations.rows);
+})
+
+app.delete("/api/aggregations", async (req, res) => {
+  const aggregationsToRemove = req.body;
+  await Promise.all(aggregationsToRemove.map((aggregationId: number) => {
+    return pool.query(`DELETE FROM aggregations WHERE ID = $1`, [aggregationId]);
+  }));
+  await writeYaml();
+  res.status(200).send();
+})
+
 app.post("/api/acceptedRecommendations", async(req, res) => {
   const acceptedRecs: acceptedRecommendations = req.body;
-  await yamlBuilderCoordinator(acceptedRecs);
+  await writeNewRulestoYaml(acceptedRecs);
   // const output = await getAggregations()
   // console.log(output)
   res.json({ status: "OK"});
