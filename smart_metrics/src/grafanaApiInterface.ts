@@ -89,7 +89,7 @@ interface Target {
   expr: string;
 }
 
-//returns all queries executed in the last two weeks.
+//returns all queries executed in the last 24 hours.
 export async function collectQueries() {
   try {
     const response = await axios.get<QueryHistoryResponse>(`${GRAFANA_URL}/api/query-history`, {
@@ -99,7 +99,8 @@ export async function collectQueries() {
       },
     });
 
-    const queries = response.data.result.queryHistory;
+    const cutoff = Date.now() / 1000 - 86400;
+    const queries = (response.data.result.queryHistory ?? []).filter(q => q.createdAt >= cutoff);
     return queries;
   } catch (err) {
     throw err;

@@ -5,6 +5,7 @@ import { runOrchestrator } from "./orchestrator.js";
 import type { acceptedRecommendations } from "./yamlBuilder.js";
 import { yamlBuilderCoordinator } from "./yamlBuilder.js";
 import { stat } from "node:fs";
+// import { getAggregations } from "./aggregationEngine.js";
 
 const app = express();
 app.use(express.json());
@@ -23,9 +24,11 @@ app.get("/api/recommendations", async (_req, res) => {
   res.json(result.rows);
 });
 
-app.post("/api/acceptedRecommendations", (req, res) => {
+app.post("/api/acceptedRecommendations", async(req, res) => {
   const acceptedRecs: acceptedRecommendations = req.body;
   yamlBuilderCoordinator(acceptedRecs);
+  // const output = await getAggregations()
+  // console.log(output)
   res.json({ status: "OK"})
 })
 

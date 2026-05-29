@@ -56,6 +56,14 @@ export async function setupDatabase() {
         )
     );
 
+    CREATE TABLE IF NOT EXISTS aggregations(
+      id                BIGSERIAL   PRIMARY KEY,
+      metric_name       TEXT         NOT NULL,
+      labels            TEXT[]       NOT NULL,
+      json_snippet      JSONB        NOT NULL, 
+      created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    );
+
     CREATE INDEX IF NOT EXISTS recommendations_status_created_at_idx
       ON recommendations (status, created_at DESC);
 

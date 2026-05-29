@@ -91,7 +91,9 @@ export function generateRecommendations(
     }
 
     const estimatedCurrentSeries = metricSeriesEstimate.current;
-
+    if (estimatedCurrentSeries < 100) {
+      continue
+    }
     const problemLabels = labels.filter((label) => {
       const isUsedInGrafana = usedLabels.has(label.name);
       const shouldAlwaysKeep = labelsToAlwaysKeep.has(label.name);
@@ -109,7 +111,7 @@ export function generateRecommendations(
       const estimatedAfterSeries = metricSeriesEstimate.afterByRemovedLabel[problemLabel.name];
       const estimatedReductionPercent = metricSeriesEstimate.percentageReduction[problemLabel.name];
 
-      if (typeof estimatedAfterSeries !== "number" || typeof estimatedReductionPercent !== "number") {
+      if ((typeof estimatedAfterSeries !== "number" || typeof estimatedReductionPercent !== "number") || estimatedReductionPercent === 0) {
         continue;
       }
 
