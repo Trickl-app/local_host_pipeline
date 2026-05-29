@@ -53,6 +53,7 @@ export async function yamlBuilderCoordinator(acceptedRecommendations: acceptedRe
   const entries = Object.entries(acceptedRecommendations);
   //now looks like this:
   //[["metricA", {problemLabels: ..., allLabels: ...}], ["metricB", {problemLabels: ..., allLabels: ...}]]
+  //we don't use promise.all because we don't want write conflicts when invoking writeRule
   for (const subArr of entries) {
     //determine type for aggregation function
     //...subArr = metricName, {problemLabels: ..., allLabels: ...}
