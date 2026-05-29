@@ -26,10 +26,10 @@ app.get("/api/recommendations", async (_req, res) => {
 
 app.post("/api/acceptedRecommendations", async(req, res) => {
   const acceptedRecs: acceptedRecommendations = req.body;
-  yamlBuilderCoordinator(acceptedRecs);
+  await yamlBuilderCoordinator(acceptedRecs);
   // const output = await getAggregations()
   // console.log(output)
-  res.json({ status: "OK"})
+  res.json({ status: "OK"});
 })
 
 app.get('/health', (req, res) => {
