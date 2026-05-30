@@ -61,6 +61,7 @@ export async function setupDatabase() {
       metric_name       TEXT         NOT NULL,
       labels            TEXT[]       NOT NULL,
       json_snippet      JSONB        NOT NULL, 
+      aggregated        BOOL         NOT NULL DEFAULT FALSE, 
       created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW()
     );
 

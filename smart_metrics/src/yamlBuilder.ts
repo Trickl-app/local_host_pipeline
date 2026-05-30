@@ -5,6 +5,7 @@ import { pool } from "./database.js";
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { appendFile, writeFile } from 'fs/promises';
+import { UnquotedLabelMatcher } from '@prometheus-io/lezer-promql';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = process.env.YAML_PATH || resolve(__dirname, '../../vmagent/aggregations.yml');
 
@@ -123,13 +124,15 @@ export interface AggregationRule {
     match: string;
     interval?: string;
     outputs?: string[];
+    aggregate: boolean;
     without: string[]
 }
 
 export function buildRule(metricName: string, allAndProblemLabelsObj: acceptedRecommendations[string], type: MetricType): AggregationRule {
     const base: AggregationRule = {
         match: metricName,
-        without: allAndProblemLabelsObj.problemLabels
+        without: allAndProblemLabelsObj.problemLabels,
+        aggregate: false
     }; 
   
     // evaluate if aggregate is falsy, if so just return obj without an agg rule. 
@@ -141,15 +144,18 @@ export function buildRule(metricName: string, allAndProblemLabelsObj: acceptedRe
         histogram: 'histogram_bucket',
         summary: 'avg',
     };
+
+    base.aggregate = true;
     // add in the outputs field if line 138 did not execute. 
     return { ...base, interval: allAndProblemLabelsObj.interval, outputs: [outputMap[type]] };
 }
 export async function writeToDb(rule: AggregationRule) {
   try {
+    const aggregate = rule.aggregate
     const metric = rule.match
     const labels = rule.without
     const json = rule
-    await pool.query(`INSERT INTO aggregations(metric_name, labels, json_snippet) VALUES($1, $2, $3)`, [metric, labels, json])
+    await pool.query(`INSERT INTO aggregations(metric_name, labels, json_snippet, aggregated) VALUES($1, $2, $3, $4)`, [metric, labels, json, aggregate])
 
   } catch (err: any) {
     // let it bubble up to yamlBuilderCoordinator, which will then let it bubble to the index.ts route.
