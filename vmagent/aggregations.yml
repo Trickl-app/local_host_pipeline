@@ -1,1 +1,8 @@
-[]
+- match: 'http_requests_total'
+  interval: 1m
+  outputs: [total]
+  without: [request_id]
+- match: 'db_queries_total'
+  interval: 1m
+  outputs: [total]
+  without: [trace_id]
