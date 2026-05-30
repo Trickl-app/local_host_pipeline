@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: SmartMetrics
+    type: marcusolsson-json-datasource
+    access: proxy
+    uid: smart-metrics
+    # Grafana server-side URL — works because HOST mode means Grafana and
+    # smart-metrics share the same EC2 network namespace (localhost resolves correctly).
+    url: http://localhost:3001
+    editable: false
