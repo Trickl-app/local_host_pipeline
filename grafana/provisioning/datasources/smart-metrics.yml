@@ -5,7 +5,9 @@ datasources:
     type: marcusolsson-json-datasource
     access: proxy
     uid: smart-metrics
-    # Grafana server-side URL — works because HOST mode means Grafana and
-    # smart-metrics share the same EC2 network namespace (localhost resolves correctly).
-    url: http://localhost:3001
+    # Grafana server-side URL. ECS HOST mode: both containers share the EC2 network
+    # namespace so localhost resolves correctly — no env var needed.
+    # docker-compose: each container has its own namespace; override via
+    # SMART_METRICS_INTERNAL_URL=http://smart-metrics:3001 in the grafana service.
+    url: ${SMART_METRICS_INTERNAL_URL:-http://localhost:3001}
     editable: false
