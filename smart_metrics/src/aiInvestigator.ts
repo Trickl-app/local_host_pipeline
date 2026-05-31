@@ -15,6 +15,7 @@ type InvestigationRequest = {
 };
 
 type InvestigationResult = {
+  answer: string;
   questionClass: QuestionClass;
   summary: string;
   evidence: string[];
@@ -68,6 +69,11 @@ const resultSchema = {
   schema: {
     type: "object",
     properties: {
+      answer: {
+        type: "string",
+        description:
+          "Natural user-facing answer. Write this like a concise assistant response, not a report template.",
+      },
       questionClass: {
         type: "string",
         enum: [
@@ -88,6 +94,7 @@ const resultSchema = {
       toolCallsUsed: { type: "array", items: { type: "string" } },
     },
     required: [
+      "answer",
       "questionClass",
       "summary",
       "evidence",
@@ -363,6 +370,9 @@ function systemInstructions(questionClass: QuestionClass) {
     "Use getGrafanaUsage when the user asks which labels, metrics, dashboards, or queries are actually used.",
     "Use getMetricSeriesBreakdown when the user asks what exists in VictoriaMetrics or which metrics/labels have the most series.",
     "Use only the provided tool output as evidence.",
+    "Write answer as the primary user-facing response: conversational, direct, and specific to the user's question.",
+    "Keep answer to 2-4 short paragraphs unless the user asks for more detail.",
+    "Do not make answer sound like a rigid template.",
     "If the backend context has no recommendations, say there is not enough data yet.",
     "Do not claim YAML was applied.",
     "Do not accept, decline, apply, reload, delete, or mutate anything.",
