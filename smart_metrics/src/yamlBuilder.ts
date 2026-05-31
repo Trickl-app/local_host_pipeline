@@ -8,6 +8,7 @@ import { appendFile, writeFile } from 'fs/promises';
 import { UnquotedLabelMatcher } from '@prometheus-io/lezer-promql';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = process.env.YAML_PATH || resolve(__dirname, '../../vmagent/aggregations.yml');
+const DROP_LABEL_PATH = process.env.DROP_LABEL_PATH || resolve(__dirname, '../../vmagent/relabel.yml');
 
 type MetricType = 'counter' | 'gauge' | 'histogram' | 'summary';
 

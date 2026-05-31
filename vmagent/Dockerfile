@@ -16,6 +16,7 @@ CMD [ \
   "--remoteWrite.url=http://vminsert:8480/insert/0/prometheus/api/v1/write", \
   "--remoteWrite.streamAggr.config=/etc/vmagent/aggregations.yml", \
   "--remoteWrite.streamAggr.dropInput=true", \
+  "--remoteWrite.relabelConfig=/etc/vmagent/relabel.yml", \
   # url[1]: vector receives raw metrics for S3 archival, no aggregation applied
   "--remoteWrite.url=http://vector:9090/", \
   "--remoteWrite.streamAggr.dropInput=false" \
