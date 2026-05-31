@@ -190,24 +190,32 @@ interface NormalizedMetricsData {
 }
 
 async function getAggregations() {
-  const aggregations = await pool.query(`SELECT metric_name FROM aggregations`)
+  const aggregations = await pool.query(`SELECT metric_name FROM rules WHERE aggregated = true`)
   return aggregations.rows.map(rowObj => rowObj.metric_name)
+}
+
+async function getLabelDropRules(): Promise<Map<string, Set<string>>> {
+  const result = await pool.query(`SELECT metric_name, labels FROM rules WHERE aggregated = false`);
+  const map = new Map<string, Set<string>>();
+  for (const row of result.rows) {
+    map.set(row.metric_name, new Set(row.labels));
+  }
+  return map;
 }
 
 export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetricsData> {
   //get our usedlabels, raw tsdb stats (series counts per metric), and labelvalue counts per metric
-  const [combinedGrafanaObj, metricsData, vmObject] = await Promise.all([
+  const [combinedGrafanaObj, metricsData, vmObject, aggregations, labelDropRules] = await Promise.all([
     combineManualandDashboardQueries(),
     getMetricsData(date),
     vmParser(date),
+    getAggregations(),
+    getLabelDropRules(),
   ]);
 
   const usedLabels = new Set(
     Object.values(combinedGrafanaObj).flatMap(labelSet => [...labelSet])
   );
-
-  // get list of existing aggregations
-  const aggregations = await getAggregations()
 
   // filter vmEntries to exclude any metrics that are in aggregations list
   // filtering here to avoid needing to filter twice (214, 230)
@@ -235,7 +243,10 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
     filteredVmObject.map(async ([metricName, labelItems]) => {
       //current series count for a metric
       const current = seriesCountByName.get(metricName) ?? 0;
-      const unqueriedLabels = labelItems.filter(l => !usedLabels.has(l.name));
+      // filters out labels queried by grafana, and labels already covered by an existing drop rule
+      const unqueriedLabels = labelItems
+        .filter(l => !usedLabels.has(l.name))
+        .filter(l => !labelDropRules.get(metricName)?.has(l.name));
 
       const afterByRemovedLabel: Record<string, number> = {};
       const percentageReduction: Record<string, number> = {};
