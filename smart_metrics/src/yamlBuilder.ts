@@ -63,7 +63,7 @@ export async function writeNewRulestoYaml(acceptedRecommendations: acceptedRecom
 }
 
 export async function writeYaml() {
-  const queryRes = await pool.query(`SELECT * FROM aggregations;`);
+  const queryRes = await pool.query(`SELECT * FROM rules;`);
   const rows = queryRes.rows
   // writeFile wipes the yaml file and replaces with an empty array. 
   await writeFile(YAML_PATH, '[]');
@@ -156,7 +156,7 @@ export async function writeToDb(rule: AggregationRule) {
     const metric = rule.match
     const labels = rule.without
     const json = rule
-    await pool.query(`INSERT INTO aggregations(metric_name, labels, json_snippet, aggregated) VALUES($1, $2, $3, $4)`, [metric, labels, json, aggregate])
+    await pool.query(`INSERT INTO rules(metric_name, labels, json_snippet, aggregated) VALUES($1, $2, $3, $4)`, [metric, labels, json, aggregate])
 
   } catch (err: any) {
     // let it bubble up to yamlBuilderCoordinator, which will then let it bubble to the index.ts route.

@@ -53,7 +53,7 @@ app.post("/api/ai/investigate", async (req, res) => {
 
 app.get("/api/aggregations", async (req, res) => {
   const aggregations = await pool.query(
-    `SELECT id, metric_name, labels, json_snippet FROM aggregations`
+    `SELECT id, metric_name, labels, json_snippet FROM rules`
   );
 
   res.json(aggregations.rows);
@@ -62,7 +62,7 @@ app.get("/api/aggregations", async (req, res) => {
 app.delete("/api/aggregations", async (req, res) => {
   const aggregationsToRemove = req.body;
   await Promise.all(aggregationsToRemove.map((aggregationId: number) => {
-    return pool.query(`DELETE FROM aggregations WHERE ID = $1`, [aggregationId]);
+    return pool.query(`DELETE FROM rules WHERE ID = $1`, [aggregationId]);
   }));
   await writeYaml();
   res.status(200).send();

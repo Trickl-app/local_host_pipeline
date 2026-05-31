@@ -71,7 +71,7 @@ export async function getAiRecommendations(status: RecommendationStatusFilter = 
     return {
       status,
       note:
-        "The recommendations table is currently a pending cache. Accepted rules move into aggregations, and declined recommendations are not stored.",
+        "The recommendations table is currently a pending cache. Accepted rules move into the rules table, and declined recommendations are not stored.",
       recommendations: [],
     };
   }
@@ -83,7 +83,7 @@ export async function getAiRecommendations(status: RecommendationStatusFilter = 
     return {
       status,
       note:
-        "This returns the current recommendation cache. Durable accepted rules live in aggregations.",
+        "This returns the current recommendation cache. Durable accepted rules live in the rules table.",
       recommendations: result.rows.map(formatRecommendation),
     };
   }
@@ -106,7 +106,7 @@ export async function getAiDecisionHistory(limit: number) {
     requestedLimit: Math.min(Math.max(limit, 1), 25),
     available: false,
     reason:
-      "Metropolis does not currently persist declined recommendation history. Accepted recommendations are materialized as rows in the aggregations table.",
+      "Metropolis does not currently persist declined recommendation history. Accepted recommendations are materialized as rows in the rules table.",
     acceptedRuleSource: "getAggregations",
   };
 }
@@ -114,7 +114,7 @@ export async function getAiDecisionHistory(limit: number) {
 export async function getAiAggregations() {
   const result = await pool.query<AggregationRow>(
     `SELECT id, metric_name, labels, json_snippet, aggregated, created_at
-     FROM aggregations
+     FROM rules WHERE aggregated = true
      ORDER BY created_at DESC`
   );
 
@@ -228,7 +228,7 @@ export async function getAiContext(date: string) {
     storedRules,
     limitations: [
       "The recommendations table is a pending cache.",
-      "Accepted recommendations are represented by rows in aggregations.",
+      "Accepted recommendations are represented by rows in the rules table.",
       "Declined recommendation history is not currently persisted.",
     ],
   };

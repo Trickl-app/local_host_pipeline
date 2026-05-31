@@ -56,7 +56,7 @@ export async function setupDatabase() {
         )
     );
 
-    CREATE TABLE IF NOT EXISTS aggregations(
+    CREATE TABLE IF NOT EXISTS rules(
       id                BIGSERIAL   PRIMARY KEY,
       metric_name       TEXT         NOT NULL,
       labels            TEXT[]       NOT NULL,
