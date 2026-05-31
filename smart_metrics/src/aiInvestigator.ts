@@ -15,6 +15,7 @@ type InvestigationRequest = {
 };
 
 type InvestigationResult = {
+  questionClass: QuestionClass;
   summary: string;
   evidence: string[];
   likelyCause: string;
@@ -23,7 +24,42 @@ type InvestigationResult = {
   toolCallsUsed: string[];
 };
 
+type QuestionClass =
+  | "cardinality_spike"
+  | "recommendation_review"
+  | "grafana_usage"
+  | "metric_series_breakdown"
+  | "aggregation_rules"
+  | "decision_history"
+  | "general";
+
 const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+
+const classificationSchema = {
+  type: "json_schema",
+  name: "ai_question_classification",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      questionClass: {
+        type: "string",
+        enum: [
+          "cardinality_spike",
+          "recommendation_review",
+          "grafana_usage",
+          "metric_series_breakdown",
+          "aggregation_rules",
+          "decision_history",
+          "general",
+        ],
+      },
+      reason: { type: "string" },
+    },
+    required: ["questionClass", "reason"],
+    additionalProperties: false,
+  },
+} as const;
 
 const resultSchema = {
   type: "json_schema",
@@ -32,6 +68,18 @@ const resultSchema = {
   schema: {
     type: "object",
     properties: {
+      questionClass: {
+        type: "string",
+        enum: [
+          "cardinality_spike",
+          "recommendation_review",
+          "grafana_usage",
+          "metric_series_breakdown",
+          "aggregation_rules",
+          "decision_history",
+          "general",
+        ],
+      },
       summary: { type: "string" },
       evidence: { type: "array", items: { type: "string" } },
       likelyCause: { type: "string" },
@@ -40,6 +88,7 @@ const resultSchema = {
       toolCallsUsed: { type: "array", items: { type: "string" } },
     },
     required: [
+      "questionClass",
       "summary",
       "evidence",
       "likelyCause",
@@ -168,12 +217,13 @@ export async function investigateCardinality(
   ];
 
   const client = new OpenAI();
+  const questionClass = await classifyQuestion(client, request);
   const toolCallsUsed: string[] = [];
 
   for (let round = 0; round < 3; round += 1) {
     const response = await client.responses.create({
       model: MODEL,
-      instructions: systemInstructions(),
+      instructions: systemInstructions(questionClass),
       tools: toolDefinitions,
       input,
     });
@@ -197,7 +247,7 @@ export async function investigateCardinality(
 
   const finalResponse = await client.responses.create({
     model: MODEL,
-    instructions: systemInstructions(),
+    instructions: systemInstructions(questionClass),
     text: { format: resultSchema },
     input,
   });
@@ -205,8 +255,39 @@ export async function investigateCardinality(
   const parsed = JSON.parse(finalResponse.output_text) as InvestigationResult;
   return {
     ...parsed,
+    questionClass,
     toolCallsUsed: parsed.toolCallsUsed.length ? parsed.toolCallsUsed : toolCallsUsed,
   };
+}
+
+async function classifyQuestion(
+  client: OpenAI,
+  request: InvestigationRequest
+): Promise<QuestionClass> {
+  const response = await client.responses.create({
+    model: MODEL,
+    instructions: [
+      "Classify this Metropolis observability question.",
+      "Pick the single best class.",
+      "Use cardinality_spike for broad why/what happened investigations.",
+      "Use recommendation_review for prioritizing or explaining pending recommendations.",
+      "Use grafana_usage for dashboard/query/label usage questions.",
+      "Use metric_series_breakdown for VictoriaMetrics series or label cardinality questions.",
+      "Use aggregation_rules for accepted/stored/applied rule questions.",
+      "Use decision_history for accepted/declined/past decision memory questions.",
+      "Use general only when no specific class fits.",
+    ].join("\n"),
+    text: { format: classificationSchema },
+    input: [
+      {
+        role: "user",
+        content: `Question: ${request.question}\nDate: ${request.date}`,
+      },
+    ],
+  });
+
+  const parsed = JSON.parse(response.output_text) as { questionClass: QuestionClass };
+  return parsed.questionClass;
 }
 
 async function runTool(
@@ -270,12 +351,13 @@ function normalizeGrafanaSource(source: unknown): "all" | "queryHistory" | "dash
   return "all";
 }
 
-function systemInstructions() {
-  return [
+function systemInstructions(questionClass: QuestionClass) {
+  const baseInstructions = [
     "You are the Metropolis AI Cardinality Investigator.",
     "Use the read-only tools needed to answer the user's question.",
     "Use getMetropolisAiContext for broad cardinality summaries.",
     "Use getRecommendations when the user asks what pending recommendations to remove, prioritize, accept, or review.",
+    "For questions about whether a specific label is used in Grafana, also inspect pending recommendations before suggesting an action.",
     "Use getDecisionHistory when the user asks about rejected or historical decisions; explain that declined history is not currently persisted.",
     "Use getAggregations when the user asks what accepted rules are already stored or applied.",
     "Use getGrafanaUsage when the user asks which labels, metrics, dashboards, or queries are actually used.",
@@ -284,5 +366,29 @@ function systemInstructions() {
     "If the backend context has no recommendations, say there is not enough data yet.",
     "Do not claim YAML was applied.",
     "Do not accept, decline, apply, reload, delete, or mutate anything.",
-  ].join("\n");
+    `The routed question class is ${questionClass}.`,
+  ];
+
+  return [...baseInstructions, responseInstructions(questionClass)].join("\n");
+}
+
+function responseInstructions(questionClass: QuestionClass) {
+  const instructionsByClass: Record<QuestionClass, string> = {
+    cardinality_spike:
+      "For cardinality_spike, answer like an incident summary: what changed, strongest evidence, likely cause, and first safe next action.",
+    recommendation_review:
+      "For recommendation_review, rank or explain pending recommendations by impact and user safety. Mention estimated reduction when available.",
+    grafana_usage:
+      "For grafana_usage, focus on whether labels or metrics are actually used by dashboards or query history. If a label is unused and appears in pending recommendations, say that supports reviewing aggregation/removal. Do not recommend adding high-cardinality labels to dashboards unless tool evidence shows a clear user need.",
+    metric_series_breakdown:
+      "For metric_series_breakdown, focus on VictoriaMetrics facts: series counts, label cardinality, and which metric or label is largest.",
+    aggregation_rules:
+      "For aggregation_rules, focus on stored aggregation rules. Distinguish accepted/stored rules from pending recommendations.",
+    decision_history:
+      "For decision_history, explain the product limitation honestly: declined decisions are not persisted yet, while accepted rules appear in aggregations.",
+    general:
+      "For general, answer narrowly from available tool evidence and suggest a more specific follow-up question if needed.",
+  };
+
+  return instructionsByClass[questionClass];
 }
