@@ -1,4 +1,4 @@
-# vmagent/aggregations.yml
+vmagent/aggregations.yml
 
 # Staged plugin build artifacts (populated by grafana_custom_plugin's build step)
 grafana/plugin-dist/
@@ -146,4 +146,4 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
-# vmagent/relabel.yml
+vmagent/relabel.yml
