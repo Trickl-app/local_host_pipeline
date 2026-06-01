@@ -126,7 +126,7 @@ const toolDefinitions: any[] = [
     type: "function",
     name: "getRecommendations",
     description:
-      "Get read-only current Metropolis recommendations. This table is a pending cache; accepted rules live in aggregations and declined recommendations are not stored.",
+      "Get read-only current Metropolis recommendations. This table is a pending cache; accepted rules live in the rules table and declined recommendations are not stored.",
     strict: true,
     parameters: {
       type: "object",
@@ -393,9 +393,9 @@ function responseInstructions(questionClass: QuestionClass) {
     metric_series_breakdown:
       "For metric_series_breakdown, focus on VictoriaMetrics facts: series counts, label cardinality, and which metric or label is largest.",
     aggregation_rules:
-      "For aggregation_rules, focus on stored aggregation rules. Distinguish accepted/stored rules from pending recommendations.",
+      "For aggregation_rules, focus on stored rules. Distinguish accepted/stored rules from pending recommendations.",
     decision_history:
-      "For decision_history, explain the product limitation honestly: declined decisions are not persisted yet, while accepted rules appear in aggregations.",
+      "For decision_history, explain the product limitation honestly: declined decisions are not persisted yet, while accepted rules appear in the rules table.",
     general:
       "For general, answer narrowly from available tool evidence and suggest a more specific follow-up question if needed.",
   };

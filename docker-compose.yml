@@ -64,6 +64,7 @@ services:
     volumes:
       - vmagent-data:/vmagentdata
       - ./vmagent/aggregations.yml:/etc/vmagent/aggregations.yml
+      - ./vmagent/relabel.yml:/etc/vmagent/relabel.yml
     depends_on:
       - vminsert
       #- vector
@@ -135,11 +136,13 @@ services:
       - GRAFANA_PASSWORD=admin    
       - VMSELECT_ENDPOINT=http://vmselect:8481/select/0/prometheus/api/v1
       - YAML_PATH=/app/aggregations/aggregations.yml
+      - DROP_LABEL_PATH=/app/aggregations/relabel.yml
       - VMAGENT_URL=http://vmagent:8429
       - OPENAI_API_KEY
       - OPENAI_MODEL=gpt-4.1-mini
     volumes:
       - ./vmagent/aggregations.yml:/app/aggregations/aggregations.yml
+      - ./vmagent/relabel.yml:/app/aggregations/relabel.yml
     depends_on:
       postgres:
         condition: service_healthy
