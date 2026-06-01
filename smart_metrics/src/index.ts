@@ -54,7 +54,6 @@ app.get("/api/rules", async (req, res) => {
   const rules = await pool.query(
     `SELECT id, metric_name, labels, json_snippet FROM rules`
   );
-
   res.json(rules.rows);
 })
 
