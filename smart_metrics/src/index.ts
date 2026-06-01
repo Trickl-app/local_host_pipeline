@@ -72,7 +72,7 @@ app.post("/api/acceptedRecommendations", async(req, res) => {
   await writeNewRulestoYaml(acceptedRecs);
   // const output = await getAggregations()
   // console.log(output)
-  res.json({ status: "OK"});
+  res.json({ status: "OK" });
 })
 
 app.get('/health', (req, res) => {
