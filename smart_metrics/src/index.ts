@@ -17,7 +17,6 @@ const PORT = process.env.PORT ?? 3001;
 app.use(cors());
 
 app.get("/api/recommendations", async (_req, res) => {
-  //we have the cron job run on each load for testing purposes
   await runOrchestrator();
   const result = await pool.query(
     `SELECT * FROM recommendations WHERE status = 'pending' ORDER BY created_at DESC`
@@ -77,7 +76,7 @@ app.post("/api/acceptedRecommendations", async(req, res) => {
 })
 
 app.get('/health', (req, res) => {
-  res.json( { status: "I'M HEALTHY"})
+  res.json( { status: "I'M HEALTHY" })
 })
 
 await setupDatabase();
