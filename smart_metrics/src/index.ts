@@ -52,7 +52,7 @@ app.post("/api/ai/investigate", async (req, res) => {
 
 app.get("/api/rules", async (req, res) => {
   const rules = await pool.query(
-    `SELECT id, metric_name, labels, json_snippet FROM rules`
+    `SELECT id, metric_name, labels, json_snippet, aggregated FROM rules`
   );
   res.json(rules.rows);
 })
