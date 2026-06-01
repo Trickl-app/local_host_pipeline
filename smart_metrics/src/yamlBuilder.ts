@@ -88,7 +88,7 @@ export async function writeYaml() {
   if (labelDropRows.length && labelDropRows[0]) {
     await writeRule(labelDropRows[0].json_snippet, true);
     await Promise.all(labelDropRows.slice(1).map((row) => {
-    return writeRule(row.json_snippet);
+      return writeRule(row.json_snippet);
     }));
   }
   // tell vmagent to hot-reload its config so the new rule takes effect immediately
