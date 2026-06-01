@@ -56,18 +56,19 @@ interface RulesTableRow {
 //needs to be renamed
 //this is called in the api endpoint (POST), when the grafana front end, submits a batch of recommendations.
 //the shape at point of invocation is acceptedRecommendations (which is the shape we built in front endd)
-export async function writeNewRulestoYaml(acceptedRecommendations: acceptedRecommendations) {
+export async function writeNewRulestoYaml(acceptedRecommendations: acceptedRecommendations): Promise<RulesTableRow[]> {
   // we need the metric name; we have to get this from the key, so we use object.entries cos it gives us the KEYs and values.
   const entries = Object.entries(acceptedRecommendations);
   //now looks like this:
   //[["metricA", {problemLabels: ..., allLabels: ...}], ["metricB", {problemLabels: ..., allLabels: ...}]]
-  await Promise.all(entries.map(async (subArr) => {
+  const createdRows = await Promise.all(entries.map(async (subArr) => {
     // this saves an unnecessary detect call when we're just dropping labels only
     const type = subArr[1].aggregate ? await detectMetricType(...subArr) : "labelDrop"
     const rule = buildRule(...subArr, type);
     return writeToDb(rule);
   }))
   await writeYaml();
+  return createdRows;
 }
 
 export async function writeYaml() {
@@ -88,7 +89,7 @@ export async function writeYaml() {
   if (labelDropRows.length && labelDropRows[0]) {
     await writeRule(labelDropRows[0].json_snippet, true);
     await Promise.all(labelDropRows.slice(1).map((row) => {
-      return writeRule(row.json_snippet);
+    return writeRule(row.json_snippet);
     }));
   }
   // tell vmagent to hot-reload its config so the new rule takes effect immediately
@@ -165,13 +166,14 @@ export function buildRule(metricName: string, allAndProblemLabelsObj: acceptedRe
     // add in the outputs field if line 138 did not execute. 
     return { ...base, interval: allAndProblemLabelsObj.interval, outputs: [outputMap[type]] };
 }
-export async function writeToDb(rule: Rule) {
+export async function writeToDb(rule: Rule): Promise<RulesTableRow> {
   try {
     const aggregate = rule.aggregate
     const metric = rule.match
     const labels = rule.without
     const json = rule
-    await pool.query(`INSERT INTO rules(metric_name, labels, json_snippet, aggregated) VALUES($1, $2, $3, $4)`, [metric, labels, json, aggregate])
+    const result = await pool.query<RulesTableRow>(`INSERT INTO rules(metric_name, labels, json_snippet, aggregated) VALUES($1, $2, $3, $4) RETURNING *`, [metric, labels, json, aggregate])
+    return result.rows[0]!
 
   } catch (err: any) {
     // let it bubble up to yamlBuilderCoordinator, which will then let it bubble to the index.ts route.

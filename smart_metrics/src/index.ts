@@ -50,17 +50,17 @@ app.post("/api/ai/investigate", async (req, res) => {
   }
 });
 
-app.get("/api/aggregations", async (req, res) => {
-  const aggregations = await pool.query(
+app.get("/api/rules", async (req, res) => {
+  const rules = await pool.query(
     `SELECT id, metric_name, labels, json_snippet FROM rules`
   );
 
-  res.json(aggregations.rows);
+  res.json(rules.rows);
 })
 
-app.delete("/api/aggregations", async (req, res) => {
-  const aggregationsToRemove = req.body;
-  await Promise.all(aggregationsToRemove.map((aggregationId: number) => {
+app.delete("/api/rules", async (req, res) => {
+  const rulesToRemove = req.body;
+  await Promise.all(rulesToRemove.map((aggregationId: number) => {
     return pool.query(`DELETE FROM rules WHERE ID = $1`, [aggregationId]);
   }));
   await writeYaml();
@@ -69,10 +69,10 @@ app.delete("/api/aggregations", async (req, res) => {
 
 app.post("/api/acceptedRecommendations", async(req, res) => {
   const acceptedRecs: acceptedRecommendations = req.body;
-  await writeNewRulestoYaml(acceptedRecs);
+  const createdRows = await writeNewRulestoYaml(acceptedRecs);
   // const output = await getAggregations()
   // console.log(output)
-  res.json({ status: "OK" });
+  res.json(createdRows);
 })
 
 app.get('/health', (req, res) => {
