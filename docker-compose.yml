@@ -82,7 +82,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - SMART_METRICS_API_URL=http://localhost:3001
+      - SMART_METRICS_INTERNAL_URL=http://smart-metrics:3001
     depends_on:
       - vmselect
 

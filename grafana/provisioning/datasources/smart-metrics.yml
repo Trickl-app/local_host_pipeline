@@ -1,0 +1,12 @@
+apiVersion: 1
+
+datasources:
+  - name: SmartMetrics
+    type: marcusolsson-json-datasource
+    access: proxy
+    uid: smart-metrics
+    # Grafana server-side URL — set via SMART_METRICS_INTERNAL_URL.
+    # ECS: http://localhost:3001 (HOST mode, shared EC2 network namespace).
+    # docker-compose: http://smart-metrics:3001 (service name on vm-net).
+    url: ${SMART_METRICS_INTERNAL_URL}
+    editable: false

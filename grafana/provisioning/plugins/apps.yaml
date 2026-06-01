@@ -4,6 +4,3 @@ apiVersion: 1
 apps:
   - type: 'trickl-trickl-app'
     disabled: false
-    jsonData:
-      # injected at container startup by ECS; locally override via GF_PLUGINS env var or docker-compose environment block
-      apiUrl: ${SMART_METRICS_API_URL}

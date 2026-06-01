@@ -1,5 +1,7 @@
 FROM grafana/grafana:12.4.2
 
+RUN grafana-cli plugins install marcusolsson-json-datasource
+
 # Bake the plugin into the image
 COPY plugin-dist/trickl-trickl-app /var/lib/grafana/plugins/trickl-trickl-app
 
