@@ -93,7 +93,11 @@ export async function writeYaml() {
     }));
   }
   // tell vmagent to hot-reload its config so the new rule takes effect immediately
-  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`);
+  const vmagentUser = process.env.VMAGENT_AUTH_USERNAME;
+  const vmagentPass = process.env.VMAGENT_AUTH_PASSWORD;
+  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`, {
+    ...(vmagentUser && vmagentPass ? { auth: { username: vmagentUser, password: vmagentPass } } : {}),
+  });
 }
 
 export async function writeRule(rule: Rule, overwrite: boolean = false) {
