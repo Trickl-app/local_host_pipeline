@@ -1,3 +1,5 @@
+// Core analysis pipeline: determines which VictoriaMetrics labels are unqueried by Grafana
+// and estimates the series reduction that would result from dropping them.
 import { collectQueries, collectDashboardQueries } from './grafanaApiInterface.js';
 import type { QueryHistoryEntry } from './grafanaApiInterface.js';
 import { getMetricsData, getLabelValueCountsForMetric } from './vmSelectApiInterface.js';
@@ -15,6 +17,7 @@ function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
 }
 
+// Returns { metric → Set<label> } built from Grafana's ad-hoc query history (Explore panel).
 export async function grafanaQueriesParser() {
   const queryHistory = await collectQueries() || [];
   const grafanaQueriesObject: Record<string, Set<string>> = {}
@@ -33,6 +36,7 @@ export async function grafanaQueriesParser() {
   return grafanaQueriesObject;
 }
 
+// Same as grafanaQueriesParser but sourced from saved Grafana dashboard panels.
 export async function grafanaDashboardQueriesParser() {
   const dashboardQueries = await collectDashboardQueries() || [];
   const grafanaQueriesObj: Record<string, Set<string>> = {}
@@ -49,6 +53,7 @@ export async function grafanaDashboardQueriesParser() {
   return grafanaQueriesObj;
 }
 
+// "Manual" refers to ad-hoc Explore queries. Merges both Grafana sources into one metric → Set<label> map.
 export async function combineManualandDashboardQueries(): Promise<Record<string, Set<string>>> {
   const [grafanaQueriesObj, grafanaDashboardQueriesObj] = await Promise.all([
     grafanaQueriesParser(),
@@ -77,7 +82,8 @@ interface MetricLabelsMap {
   [metricName: string]: LabelValueCount[];
 }
 
-// returns metrics data for a given day.
+// Fetches VictoriaMetrics (VM) TSDB stats for a given day.
+// Returns { metric → label cardinality data } — label name plus unique value count.
 export async function vmParser(date: Date) {
   const metricsData = await getMetricsData(date);
   const vmObject: MetricLabelsMap = {};
@@ -141,6 +147,9 @@ interface VMQueryResponse {
   };
 }
 
+// Estimates the % of series that would be eliminated if a given label were dropped.
+// PromQL counts distinct series ignoring the label, divides by total series — the gap
+// is what's driven purely by that label's cardinality variance.
 export async function getSeriesReduction(metric: string, label: string): Promise<number> {
   //we're searching over the last hour to estimate series reduction
   const query = `100 * (1 - (count(count without (${label}) (present_over_time(${metric}[1h]))) / count(present_over_time(${metric}[1h]))))`;
@@ -189,11 +198,15 @@ interface NormalizedMetricsData {
   };
 }
 
+// Metrics with an active aggregation rule are excluded from analysis — their cardinality
+// is already being reduced upstream via recording rules.
 async function getAggregations() {
   const aggregations = await pool.query(`SELECT metric_name FROM rules WHERE aggregated = true`)
   return aggregations.rows.map(rowObj => rowObj.metric_name)
 }
 
+// Labels already scheduled for removal (existing drop rules) are excluded from recommendations
+// to avoid surfacing work that's already in progress.
 async function getLabelDropRules(): Promise<Map<string, Set<string>>> {
   const result = await pool.query(`SELECT metric_name, labels FROM rules WHERE aggregated = false`);
   const map = new Map<string, Set<string>>();
@@ -203,6 +216,8 @@ async function getLabelDropRules(): Promise<Map<string, Set<string>>> {
   return map;
 }
 
+// Main orchestration function. Fetches all data sources in parallel and produces the
+// normalized shape consumed by the API layer to drive the recommendations UI.
 export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetricsData> {
   //get our usedlabels, raw tsdb stats (series counts per metric), and labelvalue counts per metric
   const [combinedGrafanaObj, metricsData, vmObject, aggregations, labelDropRules] = await Promise.all([
@@ -213,12 +228,14 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
     getLabelDropRules(),
   ]);
 
+  // Intentionally global: a label queried for any metric is excluded from drop recommendations
+  // across all metrics, not just the one it was queried against.
   const usedLabels = new Set(
     Object.values(combinedGrafanaObj).flatMap(labelSet => [...labelSet])
   );
 
   // filter vmEntries to exclude any metrics that are in aggregations list
-  // filtering here to avoid needing to filter twice (214, 230)
+  // filtering here to avoid needing to filter twice
   const filteredVmObject = Object.entries(vmObject).filter(([metricName]) => !aggregations.includes(metricName));
 
 
@@ -267,23 +284,31 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
   return {
     grafanaUsage: { usedLabels: [...usedLabels] },
     metricLabels, //metric labels and cardinality { name: string, uniqueValueCount: number }
-    seriesEstimates, // seriesEstimates: {
-//   "http.requests.total": {
-//     current: 1000,
-//     afterByRemovedLabel: {
-//       "request_id": 20,    // if we dropped request_id, series would go to 20
-//       "user_id": 40        // if we dropped user_id, series would go to 40
-//     },
-//     percentageReduction: {
-//       "request_id": 98,    // dropping request_id reduces series by 98%
-//       "user_id": 96
-//     }
-//   }
-// }
+    seriesEstimates,
   };
 }
 
-
-// import { inspect } from 'node:util';
-
-// normalizeMetricsData(new Date()).then(res => console.log(inspect(res, { depth: null})));
+// Return shape of normalizeMetricsData:
+//
+// {
+//   grafanaUsage: {
+//     usedLabels: ["env", "region", "job"]   // global across all metrics, not per-metric
+//   },
+//   metricLabels: {
+//     "http_requests_total": [
+//       { name: "env",        uniqueValueCount: 3  },
+//       { name: "request_id", uniqueValueCount: 894 }
+//     ]
+//   },
+//   seriesEstimates: {
+//     "http_requests_total": {
+//       current: 1200,
+//       afterByRemovedLabel:   { "request_id": 24  },  // projected series if label dropped
+//       percentageReduction:   { "request_id": 98  }   // % reduction if label dropped
+//     }
+//   }
+// }
+//
+// Consumed by: orchestrator.ts → generateRecommendations()
+// Recommendations are then written to the `recommendations` DB table,
+// where the API reads them to present drop candidates to the user.
