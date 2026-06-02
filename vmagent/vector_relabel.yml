@@ -1,0 +1,3 @@
+- source_labels: [__name__]
+  regex: .+:.+
+  action: drop
