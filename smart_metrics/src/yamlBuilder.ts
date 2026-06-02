@@ -102,7 +102,7 @@ export async function writeYaml() {
 
 export async function writeRule(rule: Rule, overwrite: boolean = false) {
   if (rule.aggregate) {
-    const writtenRule = `- match: '${rule.match}'\n  interval: ${rule.interval}\n  outputs: [${rule.outputs}]\n  without: [${rule.without}]\n  drop_input: true\n`;
+    const writtenRule = `- match: '${rule.match}'\n  interval: ${rule.interval}\n  outputs: [${rule.outputs}]\n  without: [${rule.without}]\n`;
     overwrite ? await writeFile(YAML_PATH, writtenRule) : await appendFile(YAML_PATH, writtenRule);
   } else {
     const writtenRule = `- if: '${rule.match}'\n  action: labeldrop\n  regex: '${rule.without.join('|')}'\n`;
