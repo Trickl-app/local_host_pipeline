@@ -79,6 +79,7 @@ export async function writeYaml() {
     row.aggregated ? agg.push(row) : drop.push(row);
     return [agg, drop];
   }, [[], []]);
+  // writeFile wipes the yaml file and replaces with an empty array.
   await Promise.all([YAML_PATH, DROP_LABEL_PATH].map(async path => await writeFile(path, '[]')));
   if (aggregateRows.length && aggregateRows[0]) {
     await writeRule(aggregateRows[0].json_snippet, true);
@@ -89,15 +90,20 @@ export async function writeYaml() {
   if (labelDropRows.length && labelDropRows[0]) {
     await writeRule(labelDropRows[0].json_snippet, true);
     await Promise.all(labelDropRows.slice(1).map((row) => {
-    return writeRule(row.json_snippet);
+      return writeRule(row.json_snippet);
     }));
   }
-  // tell vmagent to hot-reload its config so the new rule takes effect immediately
+  // Tell vmagent to hot-reload its config. Non-fatal — file writes already succeeded,
+  // vmagent will pick up changes on next restart if the reload call fails.
   const vmagentUser = process.env.VMAGENT_AUTH_USERNAME;
   const vmagentPass = process.env.VMAGENT_AUTH_PASSWORD;
-  await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`, {
-    ...(vmagentUser && vmagentPass ? { auth: { username: vmagentUser, password: vmagentPass } } : {}),
-  });
+  try {
+    await axios.get(`${process.env.VMAGENT_URL || 'http://localhost:8429'}/-/reload`, {
+      ...(vmagentUser && vmagentPass ? { auth: { username: vmagentUser, password: vmagentPass } } : {}),
+    });
+  } catch (err) {
+    console.warn('vmagent hot-reload failed (config written, reload manually if needed):', err instanceof Error ? err.message : err);
+  }
 }
 
 export async function writeRule(rule: Rule, overwrite: boolean = false) {
@@ -105,7 +111,7 @@ export async function writeRule(rule: Rule, overwrite: boolean = false) {
     const writtenRule = `- match: '${rule.match}'\n  interval: ${rule.interval}\n  outputs: [${rule.outputs}]\n  without: [${rule.without}]\n`;
     overwrite ? await writeFile(YAML_PATH, writtenRule) : await appendFile(YAML_PATH, writtenRule);
   } else {
-    const writtenRule = `- if: '${rule.match}'\n  action: labeldrop\n  regex: '${rule.without.join('|')}'\n`;
+    const writtenRule = `- if: '{__name__="${rule.match}"}'\n  action: labeldrop\n  regex: '${rule.without.join('|')}'\n`;
     overwrite ? await writeFile(DROP_LABEL_PATH, writtenRule) : await appendFile(DROP_LABEL_PATH, writtenRule);
   }
 }

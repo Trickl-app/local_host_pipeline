@@ -1,10 +1,11 @@
-[sources.prom_in]
-type = "prometheus_remote_write"
-address = "0.0.0.0:9090"
+[sources.otlp_in]
+type = "opentelemetry"
+grpc.address = "0.0.0.0:4317"
+http.address = "0.0.0.0:9090"
 
 [transforms.to_victoriametrics_format]
 type = "remap"
-inputs = ["prom_in"]
+inputs = ["otlp_in.metrics"]
   source = '''
 . = {
   "metric": merge!({"__name__": .name}, .tags),
@@ -21,3 +22,8 @@ region = "us-east-1"
 key_prefix = "unbounded_metrics/"
 encoding.codec = "json"
 framing.method = "newline_delimited"
+
+[sinks.vmagent_out]
+type = "prometheus_remote_write"
+inputs = ["otlp_in.metrics"]
+endpoint = "${VMAGENT_ENDPOINT}"

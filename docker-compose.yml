@@ -93,9 +93,15 @@ services:
     ports:
       - "9090:9090"
     environment:
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_REGION=test
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION
+      - S3_BUCKET_NAME
+      - VECTOR_AUTH_USERNAME=metrics
+      - VECTOR_AUTH_PASSWORD=testing_password
+      - VMAGENT_ENDPOINT=http://vmagent:8429/api/v1/write
+    depends_on:
+      - vmagent
       
   postgres:
     image: postgres:16-alpine
@@ -146,3 +152,5 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      vmagent:
+        condition: service_started
