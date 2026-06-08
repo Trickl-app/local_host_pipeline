@@ -60,16 +60,10 @@ function buildExplanation(
   metricName: string,
   problemLabel: MetricLabel,
   usedLabels: Set<string>,
-  estimatedCurrentSeries: number
 ) {
-  const labelCardinalityPercent = (
-    (problemLabel.uniqueValueCount / estimatedCurrentSeries) *
-    100
-  ).toFixed(2);
-
   const usedLabelText = Array.from(usedLabels).sort().join(", ") || "no labels";
 
-  return `${metricName} has a high-cardinality label that does not appear in captured Grafana usage. ${problemLabel.name} has ${problemLabel.uniqueValueCount} unique values, about ${labelCardinalityPercent}% of the estimated current series count. Captured Grafana usage includes ${usedLabelText}.`;
+  return `${metricName} has a high-cardinality label that does not appear in captured Grafana usage. ${problemLabel.name} has ${problemLabel.uniqueValueCount} unique values. Captured Grafana usage includes ${usedLabelText}.`;
 }
 
 function buildUnboundExplanation(metricName: string, problemLabel: MetricLabel) {
@@ -144,7 +138,7 @@ export function generateRecommendations(
         estimatedReductionPercent,
         isPrimeTarget,
         explanation: isPrimeTarget
-          ? buildExplanation(metricName, problemLabel, usedLabels, estimatedCurrentSeries)
+          ? buildExplanation(metricName, problemLabel, usedLabels)
           : buildUnboundExplanation(metricName, problemLabel),
       });
     }
