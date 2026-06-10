@@ -54,22 +54,22 @@ describe('detectMetricType', () => {
 describe('buildRule', () => {
 
   test('counter rule has outputs: [total]', () => {
-    const rule = buildRule('http_requests_total', { problemLabels: ['pod'], allLabels: ['pod'] }, 'counter');
+    const rule = buildRule('http_requests_total', { problemLabels: ['pod'], allLabels: ['pod'], aggregate: true, interval: '1m' }, 'counter');
     expect(rule.outputs).toEqual(['total']);
   });
 
   test('gauge rule has outputs: [avg]', () => {
-    const rule = buildRule('node_memory_bytes', { problemLabels: ['instance'], allLabels: ['instance'] }, 'gauge');
+    const rule = buildRule('node_memory_bytes', { problemLabels: ['instance'], allLabels: ['instance'], aggregate: true, interval: '1m' }, 'gauge');
     expect(rule.outputs).toEqual(['avg']);
   });
 
   test('histogram rule has outputs: [histogram_bucket]', () => {
-    const rule = buildRule('http_request_duration_bucket', { problemLabels: ['pod'], allLabels: ['le', 'pod'] }, 'histogram');
+    const rule = buildRule('http_request_duration_bucket', { problemLabels: ['pod'], allLabels: ['le', 'pod'], aggregate: true, interval: '1m' }, 'histogram');
     expect(rule.outputs).toEqual(['histogram_bucket']);
   });
 
   test('summary rule has outputs: [avg]', () => {
-    const rule = buildRule('go_gc_duration_seconds', { problemLabels: ['pod'], allLabels: ['quantile', 'pod'] }, 'summary');
+    const rule = buildRule('go_gc_duration_seconds', { problemLabels: ['pod'], allLabels: ['quantile', 'pod'], aggregate: true, interval: '1m' }, 'summary');
     expect(rule.outputs).toEqual(['avg']);
   });
 
@@ -84,7 +84,7 @@ describe('buildRule', () => {
   });
 
   test('interval is 1m', () => {
-    const rule = buildRule('http_requests_total', { problemLabels: ['pod'], allLabels: ['pod'] }, 'counter');
+    const rule = buildRule('http_requests_total', { problemLabels: ['pod'], allLabels: ['pod'], aggregate: true, interval: '1m' }, 'counter');
     expect(rule.interval).toBe('1m');
   });
 });

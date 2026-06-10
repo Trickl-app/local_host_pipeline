@@ -4,9 +4,7 @@ export interface MetricLabel {
 }
 
 export interface NormalizedMetricsData {
-  grafanaUsage: {
-    usedLabels: string[];
-  };
+  usedLabelsByMetric: Record<string, Set<string>>;
   metricLabels: {
     [metricName: string]: MetricLabel[];
   };
@@ -74,7 +72,6 @@ export function generateRecommendations(
   normalizedMetricsData: NormalizedMetricsData,
   options: RecommendationOptions = {}
 ) {
-  const usedLabels = new Set(normalizedMetricsData.grafanaUsage.usedLabels);
   const labelsToAlwaysKeep = new Set(options.labelsToAlwaysKeep ?? DEFAULT_LABELS_TO_ALWAYS_KEEP);
   const highCardinalityRatioThreshold =
     options.highCardinalityRatioThreshold ?? DEFAULT_HIGH_CARDINALITY_RATIO_THRESHOLD;
@@ -82,6 +79,7 @@ export function generateRecommendations(
   const recommendations: Recommendation[] = [];
 
   for (const [metricName, labels] of Object.entries(normalizedMetricsData.metricLabels)) {
+    const metricUsedLabels = normalizedMetricsData.usedLabelsByMetric[metricName] ?? new Set<string>();
     const metricSeriesEstimate = normalizedMetricsData.seriesEstimates[metricName];
 
     // catchs grafana queries for metrics that dont exist in vm 
@@ -98,7 +96,7 @@ export function generateRecommendations(
     const problemLabels = labels
       .map(label => ({ ...label, cardinalityRatio: label.uniqueValueCount / estimatedCurrentSeries }))
       .filter(({ cardinalityRatio, name }) => {
-        const isUsedInGrafana = usedLabels.has(name);
+        const isUsedInGrafana = metricUsedLabels.has(name);
         const shouldAlwaysKeep = labelsToAlwaysKeep.has(name);
         const isHighCardinality = cardinalityRatio >= highCardinalityRatioThreshold;
 
@@ -138,7 +136,7 @@ export function generateRecommendations(
         estimatedReductionPercent,
         isPrimeTarget,
         explanation: isPrimeTarget
-          ? buildExplanation(metricName, problemLabel, usedLabels)
+          ? buildExplanation(metricName, problemLabel, metricUsedLabels)
           : buildUnboundExplanation(metricName, problemLabel),
       });
     }

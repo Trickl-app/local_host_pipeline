@@ -161,9 +161,7 @@ export async function getSeriesReduction(metric: string, label: string): Promise
 }
 
 interface NormalizedMetricsData {
-  grafanaUsage: {
-    usedLabels: string[];
-  };
+  usedLabelsByMetric: Record<string, Set<string>>;
 
   metricLabels: {
     [metricName: string]: {
@@ -213,13 +211,6 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
     getLabelDropRules(),
   ]);
 
-  // Intentionally global: a label queried for any metric is excluded from drop recommendations
-  // across all metrics, not just the one it was queried against.
-  // This needs to change; it's over exclusionary; we're filtering out labels on all metrics if they were queried for one metrics; makes no sense.
-  const usedLabels = new Set(
-    Object.values(combinedGrafanaObj).flatMap(labelSet => [...labelSet])
-  );
-
   // filter vmEntries to exclude any metrics that are in aggregations list
   // filtering here to avoid needing to filter twice
   const filteredVmObject = Object.entries(vmObject).filter(([metricName]) => !aggregations.includes(metricName));
@@ -246,9 +237,10 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
     filteredVmObject.map(async ([metricName, labelItems]) => {
       //current series count for a metric
       const current = seriesCountByName.get(metricName) ?? 0;
-      // filters out labels queried by grafana, and labels already covered by an existing drop rule
+      // filters out labels queried by grafana for this specific metric, and labels already covered by an existing drop rule
+      const metricUsedLabels = new Set(combinedGrafanaObj[metricName] ?? []);
       const unqueriedLabels = labelItems
-        .filter(l => !usedLabels.has(l.name))
+        .filter(l => !metricUsedLabels.has(l.name))
         .filter(l => !labelDropRules.get(metricName)?.has(l.name));
 
       const afterByRemovedLabel: Record<string, number> = {};
@@ -268,7 +260,7 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
   );
 
   return {
-    grafanaUsage: { usedLabels: [...usedLabels] },
+    usedLabelsByMetric: combinedGrafanaObj,
     metricLabels, //metric labels and cardinality { name: string, uniqueValueCount: number }
     seriesEstimates,
   };
@@ -278,7 +270,7 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
 //
 // {
 //   grafanaUsage: {
-//     usedLabels: ["env", "region", "job"]   // global across all metrics, not per-metric
+//     usedLabelsByMetric: { "http_requests_total": ["env", "region"] }   // per-metric, not global
 //   },
 //   metricLabels: {
 //     "http_requests_total": [

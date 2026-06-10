@@ -8,6 +8,8 @@ export const runOrchestrator = async () => {
   const recommendations = generateRecommendations(data);
   await pool.query(`DELETE FROM recommendations WHERE status = 'pending'`);
 
+  //NOT CURRENTLY INSERTING PRIMETARGET PROPERTY
+
   await Promise.all(recommendations.map(rec => {
     const {
       metricName,
