@@ -53,7 +53,6 @@ interface RulesTableRow {
 //   }
 // }
 
-//needs to be renamed
 //this is called in the api endpoint (POST), when the grafana front end, submits a batch of recommendations.
 //the shape at point of invocation is acceptedRecommendations (which is the shape we built in front endd)
 export async function writeNewRulestoYaml(acceptedRecommendations: acceptedRecommendations): Promise<RulesTableRow[]> {

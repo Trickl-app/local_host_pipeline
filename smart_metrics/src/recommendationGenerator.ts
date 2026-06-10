@@ -113,7 +113,7 @@ export function generateRecommendations(
       const estimatedAfterSeries = metricSeriesEstimate.afterByRemovedLabel[problemLabel.name];
       const estimatedReductionPercent = metricSeriesEstimate.percentageReduction[problemLabel.name];
 
-      // skip only if reduction is 0 AND cardinality ratio is below threshold — a label that
+      // skip only if reduction is 0 AND cardinality ratio is below threshold; a label that
       // passes the ratio check should still surface even if the PromQL query can't measure reduction
       if (typeof estimatedAfterSeries !== "number" || typeof estimatedReductionPercent !== "number") {
         continue;

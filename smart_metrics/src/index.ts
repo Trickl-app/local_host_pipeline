@@ -69,8 +69,6 @@ app.delete("/api/rules", async (req, res) => {
 app.post("/api/acceptedRecommendations", async(req, res) => {
   const acceptedRecs: acceptedRecommendations = req.body;
   const createdRows = await writeNewRulestoYaml(acceptedRecs);
-  // const output = await getAggregations()
-  // console.log(output)
   res.json(createdRows);
 })
 

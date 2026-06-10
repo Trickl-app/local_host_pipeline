@@ -36,14 +36,5 @@ export const runOrchestrator = async () => {
 
 //generate recommendations
 //check table if existing rows are pending; if so delete
-//write to a table
-
-
-////api endpoint:
-//when user hits front end, the front end makes an axios call, to an api endpoint which reads that table
-//it then presents the user with all the pending rows in the table
-//user makes decisions on each label
-//rows in the table are updated
-//those that are accepted are forwarded to buildRule?
-//the json output by buildRule, is then inserted into the appropriate row in the db
-//read from all accepted rules in the db; pull all json rows, transform each into a  yaml block in aggregations.yaml
+//write to a table; kept this data model atm so ai tool has access to same data
+//presented to user. Eventually switch since we don't need this latency anymore.

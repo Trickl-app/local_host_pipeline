@@ -129,15 +129,6 @@ export function determineUnqueriedMetricLabels(grafanaQueriesObj: Record<string,
   return output;
 }
 
-//example use
-// const grafanaQueriesObj = await grafanaQueriesParser();
-// const grafanaDashboardQueriesObj = await grafanaDashboardQueriesParser();
-// const allGrafanaQueriesObj = combineManualandDashboardQueries(grafanaQueriesObj, grafanaDashboardQueriesObj);
-// console.log(allGrafanaQueriesObj);
-// const vmObj = await vmParser(new Date);
-// const unusued_labels = determineUnqueriedMetricLabels(allGrafanaQueriesObj, vmObj);
-// console.log(unusued_labels)
-
 interface VMQueryResponse {
   status: 'success' | 'error';
   data: {
@@ -148,8 +139,6 @@ interface VMQueryResponse {
 }
 
 // Estimates the % of series that would be eliminated if a given label were dropped.
-// PromQL counts distinct series ignoring the label, divides by total series — the gap
-// is what's driven purely by that label's cardinality variance.
 export async function getSeriesReduction(metric: string, label: string): Promise<number> {
   //we're searching over the last hour to estimate series reduction
   const query = `100 * (1 - (count(count without (${label}) (present_over_time(${metric}[1h]))) / count(present_over_time(${metric}[1h]))))`;
@@ -170,8 +159,6 @@ export async function getSeriesReduction(metric: string, label: string): Promise
   }
   return 0;
 }
-
-//getSeriesReduction("http.requests.total", "request_id").then(console.log)
 
 interface NormalizedMetricsData {
   grafanaUsage: {
@@ -198,15 +185,13 @@ interface NormalizedMetricsData {
   };
 }
 
-// Metrics with an active aggregation rule are excluded from analysis — their cardinality
-// is already being reduced upstream via recording rules.
+// Metrics with an active aggregation rule are excluded from analysis since they're no longer inbound anyway.
 async function getAggregations() {
   const aggregations = await pool.query(`SELECT metric_name FROM rules WHERE aggregated = true`)
   return aggregations.rows.map(rowObj => rowObj.metric_name)
 }
 
 // Labels already scheduled for removal (existing drop rules) are excluded from recommendations
-// to avoid surfacing work that's already in progress.
 async function getLabelDropRules(): Promise<Map<string, Set<string>>> {
   const result = await pool.query(`SELECT metric_name, labels FROM rules WHERE aggregated = false`);
   const map = new Map<string, Set<string>>();
@@ -230,6 +215,7 @@ export async function normalizeMetricsData(date: Date, ): Promise<NormalizedMetr
 
   // Intentionally global: a label queried for any metric is excluded from drop recommendations
   // across all metrics, not just the one it was queried against.
+  // This needs to change; it's over exclusionary; we're filtering out labels on all metrics if they were queried for one metrics; makes no sense.
   const usedLabels = new Set(
     Object.values(combinedGrafanaObj).flatMap(labelSet => [...labelSet])
   );
