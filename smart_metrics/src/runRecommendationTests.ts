@@ -3,8 +3,8 @@ import { generateRecommendations } from "./recommendationGenerator.js";
 import type { NormalizedMetricsData } from "./recommendationGenerator.js";
 
 const baseData: NormalizedMetricsData = {
-  grafanaUsage: {
-    usedLabels: ["route", "method"],
+  usedLabelsByMetric: {
+    "http.requests.total": new Set(["route", "method"]),
   },
   metricLabels: {
     "http.requests.total": [

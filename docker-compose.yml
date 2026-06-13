@@ -92,10 +92,20 @@ services:
     networks: [vm-net]
     ports:
       - "9090:9090"
+      - "8686:8686"
     environment:
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_REGION
+      - S3_BUCKET_NAME
+      - VMAGENT_ENDPOINT=http://vmagent:8429/api/v1/write
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8686/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - vmagent
       
   postgres:
     image: postgres:16-alpine
@@ -146,3 +156,5 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      vmagent:
+        condition: service_started
