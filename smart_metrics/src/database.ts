@@ -32,28 +32,19 @@ export async function setupDatabase() {
       estimated_after_series      BIGINT       NOT NULL,
       estimated_reduction_percent NUMERIC(6,2) NOT NULL,
       explanation                 TEXT         NOT NULL,
-      decision_reason             TEXT,
-      yaml_content                TEXT,
+      is_prime_target             BOOLEAN      NOT NULL DEFAULT true,
       created_at                  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-      decided_at                  TIMESTAMPTZ,
 
       CONSTRAINT recommendations_status_check
-        CHECK (status IN ('pending', 'accepted', 'declined')),
-
-      CONSTRAINT recommendations_decision_fields_check
-        CHECK (
-          (status = 'pending'                        AND decided_at IS NULL)
-          OR
-          (status IN ('accepted', 'declined') AND decided_at IS NOT NULL)
-        )
+        CHECK (status IN ('pending', 'accepted', 'declined'))
     );
 
     CREATE TABLE IF NOT EXISTS rules(
-      id                BIGSERIAL   PRIMARY KEY,
+      id                BIGSERIAL    PRIMARY KEY,
       metric_name       TEXT         NOT NULL,
       labels            TEXT[]       NOT NULL,
-      json_snippet      JSONB        NOT NULL, 
-      aggregated        BOOL         NOT NULL DEFAULT FALSE, 
+      json_snippet      JSONB        NOT NULL,
+      aggregated        BOOL         NOT NULL DEFAULT FALSE,
       created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW()
     );
 
@@ -62,6 +53,13 @@ export async function setupDatabase() {
 
     CREATE INDEX IF NOT EXISTS recommendations_metric_name_idx
       ON recommendations (metric_name);
+
+    -- idempotent migrations for existing databases
+    ALTER TABLE recommendations ADD COLUMN IF NOT EXISTS is_prime_target BOOLEAN NOT NULL DEFAULT true;
+    ALTER TABLE recommendations DROP COLUMN IF EXISTS decision_reason;
+    ALTER TABLE recommendations DROP COLUMN IF EXISTS yaml_content;
+    ALTER TABLE recommendations DROP COLUMN IF EXISTS decided_at;
+    ALTER TABLE recommendations DROP CONSTRAINT IF EXISTS recommendations_decision_fields_check;
   `);
   console.log('database schema ready');
 }

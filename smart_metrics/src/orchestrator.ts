@@ -8,8 +8,6 @@ export const runOrchestrator = async () => {
   const recommendations = generateRecommendations(data);
   await pool.query(`DELETE FROM recommendations WHERE status = 'pending'`);
 
-  //NOT CURRENTLY INSERTING PRIMETARGET PROPERTY
-
   await Promise.all(recommendations.map(rec => {
     const {
       metricName,
@@ -19,7 +17,8 @@ export const runOrchestrator = async () => {
       estimatedCurrentSeries,
       estimatedAfterSeries,
       estimatedReductionPercent,
-      explanation
+      explanation,
+      isPrimeTarget,
     } = rec;
     return pool.query(`INSERT INTO recommendations (
         metric_name,
@@ -29,10 +28,11 @@ export const runOrchestrator = async () => {
         estimated_current_series,
         estimated_after_series,
         estimated_reduction_percent,
-        explanation
+        explanation,
+        is_prime_target
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [metricName, status, problemLabel, remainingLabels, estimatedCurrentSeries, estimatedAfterSeries, estimatedReductionPercent, explanation]);
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [metricName, status, problemLabel, remainingLabels, estimatedCurrentSeries, estimatedAfterSeries, estimatedReductionPercent, explanation, isPrimeTarget]);
   }));
 }
 
